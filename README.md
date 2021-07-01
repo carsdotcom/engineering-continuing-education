@@ -1,6 +1,13 @@
 # engineering-continuing-education
 Language agnostic repository for Cars.com engineers to post solutions to code exercises
 
+## Schedule
+| Date  | Exercise | Local File Path  | Challenge URL  |  Notes |
+|---|---|---|---|---|
+|  7/7/21 |  Cryptopals, Set 1, Challenge 1 | `/cryptopals/set1/challenge1/`  | https://cryptopals.com/sets/1/challenges/1 |   |
+|  7/21/21 | Cryptopals, Set 1, Challenge 2  | `/cryptopals/set1/challenge1/` | https://cryptopals.com/sets/1/challenges/2 |   |
+|   |   |   |   |   |
+
 ## Submitting Solutions
 
 Navigate to the challenge, set, and problem folder for the problem you are solving.

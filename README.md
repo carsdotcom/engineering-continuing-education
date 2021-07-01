@@ -1,4 +1,4 @@
-# engineering-continuing-eduation
+# engineering-continuing-education
 Language agnostic repository for Cars.com engineers to post solutions to code exercises
 
 ## Submitting Solutions

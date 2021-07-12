@@ -1,12 +1,20 @@
 defmodule CryptoPals.Set1.Challenge1 do
   @moduledoc """
-  https://cryptopals.com/sets/1/challenges/1
-  Solution code should be written here. Tests can be found at
-  CryptoPals.Set1.Challenge1Test.
+  Source: 'https://cryptopals.com/sets/1/challenges/1'
+  
+  Solution code should be written here. 
+  
+  To run tests, paste the following into the commandline from the project root.
+  ```bash
+  elixir -r cryptopals/set1/challenge1/submitted_solutions/ck_pw_p1.ex
+  ```
+  
+  When submitting, change the name of this file to reflect the names of those that participated in the solution. (ex: `challenge1_mary_linda_harriet.ex`)
+  Then create a PR to add your file to the repo under cryptopals/set1/challenge1/submitted_solutions/.
   """
 
   @doc """
-  This is an example fn to serve the example test file. Please deleted it and write your own ;)
+  This is an example fn to serve the example test file. Please delete it and write your own ;)
   """
   @spec example_fn(String.t()) :: integer()
   def example_fn(string) do

@@ -4,7 +4,7 @@ Language agnostic repository for Cars.com engineers to post solutions to code ex
 ## Schedule
 | Date  | Exercise | Local File Path  | Challenge URL  |  Notes |
 |---|---|---|---|---|
-|  7/14/21 |  Cryptopals, Set 1, Challenge 1 | `/cryptopals/set1/challenge1/`  | https://cryptopals.com/sets/1/challenges/1 |   |
+|  7/14/21 @ 230pm CT|  Cryptopals, Set 1, Challenge 1 | `/cryptopals/set1/challenge1/`  | https://cryptopals.com/sets/1/challenges/1 |   |
 |  7/28/21 | Cryptopals, Set 1, Challenge 2  | `/cryptopals/set1/challenge2/` | https://cryptopals.com/sets/1/challenges/2 |   |
 |   |   |   |   |   |
 

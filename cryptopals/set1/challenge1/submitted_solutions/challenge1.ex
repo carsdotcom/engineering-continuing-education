@@ -31,7 +31,7 @@ defmodule CryptoPals.Set1.Challenge1Test do
   alias CryptoPals.Set1.Challenge1
 
   describe "hex_to_base64/1" do
-    test "given a hex, converts binary to base64" do
+    test "given a hex decodes binary and encodes as base64" do
       hex = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
       expect_result = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
       assert Challenge1.hex_to_base64(hex) == expect_result

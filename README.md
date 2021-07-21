@@ -2,7 +2,7 @@
 Language agnostic repository for Cars.com engineers to post solutions to code exercises
 
 ## Schedule
-| Date  | Exercise | Template File Path  | Challenge URL  |  Notes |
+| Date  | Exercise | Elixir Template File Path  | Challenge URL  |  Notes |
 |---|---|---|---|---|
 |  7/14/21 @ 230pm CT|  Cryptopals, Set 1, Challenge 1 | [cryptopals/set1/challenge1/elixir_template/challenge1_template.ex](https://github.com/carsdotcom/engineering-continuing-education/blob/main/cryptopals/set1/challenge1/elixir_template/challenge1_template.ex)  | https://cryptopals.com/sets/1/challenges/1 |   |
 |  7/21/21 | Cryptopals, Set 1, Challenge 2  | [cryptopals/set1/challenge2/elixir_template/challenge2_template.ex](https://github.com/carsdotcom/engineering-continuing-education/blob/main/cryptopals/set1/challenge2/elixir_template/challenge2_template.ex) | https://cryptopals.com/sets/1/challenges/2 |   |

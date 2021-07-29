@@ -11,75 +11,99 @@ defmodule CryptoPals.Set1.Challenge3 do
   elixir -r cryptopals/set1/challenge3/elixir_template/challenge3_template.ex
   ```
 
-  When submitting, change the name of this file to reflect the names of those that participated in the solution. (ex: `Challenge3_mary_linda_harriet.ex`)
-  Then create a PR to add your file to the repo under `cryptopals/set1/Challenge3/submitted_solutions/`.
+  When submitting, change the name of this file to reflect the names of those
+  that participated in the solution. (ex: `Challenge3_mary_linda_harriet.ex`)
+  Then create a PR to add your file to the repo under
+  `cryptopals/set1/Challenge3/submitted_solutions/`.
   """
 
-  @doc """
-  This is an example fn to serve the example test file. Please delete it and write your own ;)
-  """
-
-  @average_word_length 5
+  @average_word_length 4.7
+  # <<32>>
   @space " "
 
-  @spec re_xorcist(String.t()) :: integer()
+  @spec re_xorcist(String.t()) :: String.t()
   def re_xorcist(string) do
-    all_characters = make_characters()
-    decoded_int = decode_from_binary(string)
+    bin = decode_hex_string_to_binary(string)
 
-    all_characters
-    |> comparator(decoded_int)
-    |> score_messages()
+    list_all_characters()
+    |> Enum.map(&xor_encrypt(bin, &1))
+    |> Enum.map(&score_message/1)
+    |> Enum.sort_by(&elem(&1, 1), :asc)
+    # purely for pretty printing purposes
+    |> Enum.take(26)
     |> IO.inspect()
-    |> Enum.sort_by(&elem(&1, 1), :desc)
+    |> List.first()
+    |> elem(2)
   end
 
-  @spec comparator([integer], integer()) :: String.t()
-  defp comparator(all_characters, decoded_int) do
-    Enum.map(all_characters, fn character ->
-      decoded_binary
-      |> bxor(character)
-      |> encoder()
-    end)
+  @spec xor_encrypt(binary(), byte()) :: {byte(), binary()}
+  defp xor_encrypt(bin, char) do
+    bin =
+      bin
+      |> decode_binary_to_charlist()
+      |> Enum.map(&bxor(&1, char))
+      |> encode_charlist_to_binary()
+
+    {char, bin}
   end
 
-  @spec encoder(integer()) :: String.t()
-  defp encoder(integer) do
-    integer
-    # why hex first?
-    |> Integer.to_string(16)
-    |> String.downcase()
-    |> Base.decode16!(case: :lower)
-    |> Base.encode64()
+  @spec encode_charlist_to_binary(charlist()) :: binary()
+  defp encode_charlist_to_binary(chars), do: List.to_string(chars)
+
+  @spec decode_binary_to_charlist(binary()) :: charlist()
+  defp decode_binary_to_charlist(bin), do: String.to_charlist(bin)
+
+  @spec decode_hex_string_to_binary(String.t()) :: binary()
+  defp decode_hex_string_to_binary(str), do: Base.decode16!(str, case: :lower)
+
+  @spec list_all_characters() :: [byte()]
+  defp list_all_characters, do: 0..255
+
+  @spec score_message({byte(), binary()}) :: {byte(), float(), binary()}
+  defp score_message({char, message}), do: {char, score_message(message), message}
+
+  @spec score_message(binary()) :: float()
+  defp score_message(message) do
+    weighted_scores = [
+      {2, score_by_printability(message)},
+      {1, score_by_word_length(message)}
+    ]
+
+    # TODO: score by more criteria and aggregate a message's scores
+
+    {weights, _scores} = Enum.unzip(weighted_scores)
+
+    agg_score =
+      weighted_scores
+      |> Enum.map(fn {w, s} -> w * s end)
+      |> Enum.sum()
+      |> Kernel./(Enum.sum(weights))
+
+    agg_score
   end
 
-  @spec decode_from_binary(String.t()) :: integer()
-  defp decode_from_binary(string) do
-    {int, _} = Integer.parse(string, 16)
-    int
+  @spec score_by_printability(binary()) :: float()
+  defp score_by_printability(message) do
+    case List.ascii_printable?(String.to_charlist(message)) do
+      true -> 0.0
+      false -> 1.0
+    end
   end
 
-  @spec make_characters() :: [integer()]
-  defp make_characters do
-    0..255
-  end
+  @spec score_by_word_length(binary()) :: float()
+  defp score_by_word_length(message) do
+    # HT: @jwharrow for the heuristic!
 
-  @spec score_messages([String.t()]) :: [{String.t(), float()}]
-  defp score_messages(messages) do
-    Enum.map(messages, fn message ->
-      words = String.split(message, @space)
+    word_list = String.split(message, @space)
 
-      word_sum =
-        words
-        |> Enum.map(&String.length/1)
-        |> Enum.sum()
+    total_num_chars = String.length(message)
+    sum_word_length = total_num_chars - length(word_list) + 1
+    avg_word_length = sum_word_length / length(word_list)
 
-      word_length_average = word_sum / length(words)
+    delta = abs(avg_word_length / @average_word_length - 1)
+    normal = total_num_chars / @average_word_length - 1
 
-      delta = abs(word_length_average - @average_word_length)
-
-      {message, delta}
-    end)
+    delta / normal
   end
 end
 
@@ -88,7 +112,7 @@ ExUnit.configure(exclude: :pending, trace: true)
 
 defmodule CryptoPals.Set1.Challenge3Test do
   @moduledoc """
-  Tests for Cryptopals Challenge 1.
+  Tests for Cryptopals Challenge 3.
   For a submission to be considered "complete", all tests should pass.
   """
 
@@ -103,6 +127,7 @@ defmodule CryptoPals.Set1.Challenge3Test do
         )
 
       assert is_binary(message)
+      assert message == "Cooking MC's like a pound of bacon"
     end
   end
 end

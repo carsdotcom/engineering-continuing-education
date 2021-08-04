@@ -2,38 +2,51 @@ defmodule CryptoPals.Set1.Challenge3 do
   use Bitwise
   @moduledoc """
   Source: 'https://cryptopals.com/sets/1/challenges/3'
-
-  Solution code should be written here.
-
-  To run tests, paste the following into the commandline from the project root.
-  ```bash
-  elixir -r cryptopals/set1/challenge3/elixir_template/challenge3_template.ex
-  ```
-
-  When submitting, change the name of this file to reflect the names of those that participated in the solution. (ex: `Challenge3_mary_linda_harriet.ex`)
-  Then create a PR to add your file to the repo under `cryptopals/set1/Challenge3/submitted_solutions/`.
   """
 
-  @doc """
-  This is an example fn to serve the example test file. Please delete it and write your own ;)
-  """
- @encrypted_message "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+  # Taken from this article https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html
+  @letters_sorted_by_frequency ~w(e a r i o t n s l c u d p m h g b f y w k v x z j q)
+  @range 26..1
+  @letter_scores @letters_sorted_by_frequency |> Enum.zip(@range) |> Map.new()
+
   @spec decrypt() :: integer()
   def decrypt do
-    encrypted_int = decode_from_binary(@encrypted_message)
-    decode_range = (0..255)
-    Enum.map(decode_range, fn key ->
-     encrypted_int
-     |> bxor(key)
-     |> Integer.to_string(16)
-     |> Base.decode16!()
+    bytes = to_byte_list("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+
+    0..255
+    |> Enum.map(fn key ->
+      bytes
+      |> Enum.reduce(<<>>, fn byte, string ->
+        string <> <<bxor(byte, key)>>
+      end)
+      |> score()
+    end)
+    |> Enum.max_by(fn {_decoded_string, score} -> score end)
+    |> elem(0)
+  end
+
+  @spec to_byte_list(String.t()) :: list()
+  defp to_byte_list(string) do
+    {int, _} = Integer.parse(string, 16)
+    case Integer.digits(int, 2) do
+      bits when rem(length(bits), 8) == 0 -> bits
+      bits ->
+        padding = for _ <- 1..(8 - rem(length(bits), 8)), do: 0
+        Enum.concat(padding, bits)
+    end
+    |> Enum.chunk_every(8)
+    |> Enum.map(fn byte_chunk ->
+      Integer.undigits(byte_chunk, 2)
     end)
   end
 
-   @spec decode_from_binary(String.t()) :: integer()
-  defp decode_from_binary(string) do
-    {int, _} = Integer.parse(string, 16)
-    int
+  @spec score(String.t()) :: {String.t(), non_neg_integer()}
+  defp score(string) do
+    {string, string
+    |> String.graphemes()
+    |> Enum.reduce(0, fn grapheme, running_total ->
+      running_total + Map.get(@letter_scores, grapheme, 0)
+    end)}
   end
 end
 
@@ -49,9 +62,16 @@ defmodule CryptoPals.Set1.Challenge3Test do
   use ExUnit.Case
   alias CryptoPals.Set1.Challenge3
 
-  describe "example_fn/1" do
-    test "given a string, produces an integer" do
+  describe "decrypt/0" do
+    test "returns a string with only English characters" do
       assert Challenge3.decrypt()
+        |> String.replace(~r|\s+|, "")
+        |> String.to_charlist()
+        |> Enum.all?(fn char -> char in ?A..?z || char end)
+    end
+
+    test "example string returns the secret message" do
+      assert "Cooking MC's like a pound of bacon" == Challenge3.decrypt()
     end
   end
 end

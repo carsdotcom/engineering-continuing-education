@@ -1,6 +1,4 @@
 defmodule CryptoPals.Set1.Challenge3 do
-  use Bitwise
-
   @moduledoc """
   Source: 'https://cryptopals.com/sets/1/challenges/3'
 
@@ -18,32 +16,9 @@ defmodule CryptoPals.Set1.Challenge3 do
   @doc """
   This is an example fn to serve the example test file. Please delete it and write your own ;)
   """
-  def bit_shifter(string) do
-    # decode the string
-    integer_list = string |> Base.decode16!(case: :lower) |> :binary.bin_to_list()
-
-    make_characters()
-    # |> Enum.take(10)
-    |> Enum.map(fn character ->
-      integer_list
-      |> Enum.map(fn integer ->
-        bxor(character, integer)
-      end)
-      |> List.to_string()
-    end)
-    |> IO.inspect(limit: :infinity)
-
-    # XOR it against each possible character
-    # create a string of equal length for each possible single character, and xor all at once
-    # OR enumerate through each character of the string and xor it against a single ASCII character (0..255)
-
-    # score the result set for "human-ness"
-    # return the result with the "best" score
-  end
-
-  defp make_characters do
-    # make each ascii character (each being a byte)
-    0..255
+  @spec example_fn(String.t()) :: integer()
+  def example_fn(string) do
+    String.to_integer(string)
   end
 end
 
@@ -59,11 +34,9 @@ defmodule CryptoPals.Set1.Challenge3Test do
   use ExUnit.Case
   alias CryptoPals.Set1.Challenge3
 
-  describe "bit_shifter/1" do
-    test "given a string, produces an human readable sentence" do
-      Challenge3.bit_shifter(
-        "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-      )
+  describe "example_fn/1" do
+    test "given a string, produces an integer" do
+      assert Challenge3.example_fn("1") == 1
     end
   end
 end

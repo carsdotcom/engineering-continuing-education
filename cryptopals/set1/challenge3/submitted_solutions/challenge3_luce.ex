@@ -25,19 +25,19 @@ defmodule CryptoPals.Set1.Challenge3 do
   @spec re_xorcist(String.t()) :: integer()
   def re_xorcist(string) do
     all_characters = make_characters()
-    decoded_binary = decode_from_binary(string)
+    decoded_int = decode_from_binary(string)
 
     all_characters
-    |> comparator(decoded_binary)
+    |> comparator(decoded_int)
     |> score_messages()
     |> IO.inspect()
     |> Enum.sort_by(&elem(&1, 1), :desc)
   end
 
   @spec comparator([integer], integer()) :: String.t()
-  defp comparator(all_characters, decoded_binary) do
+  defp comparator(all_characters, decoded_int) do
     Enum.map(all_characters, fn character ->
-      decoded_binary
+      decoded_int
       |> bxor(character)
       |> encoder()
     end)

@@ -39,17 +39,17 @@ defmodule CryptoPals.Set1.Challenge3 do
     Enum.map(all_characters, fn character ->
       decoded_binary
       |> bxor(character)
-      |> IO.inspect(label: :inside_comparator)
-
-      # |> encoder()
+      |> encoder()
     end)
   end
 
   @spec encoder(integer()) :: String.t()
   defp encoder(integer) do
     integer
+    # why hex first?
     |> Integer.to_string(16)
     |> String.downcase()
+    |> Base.decode16!(case: :lower)
     |> Base.encode64()
   end
 

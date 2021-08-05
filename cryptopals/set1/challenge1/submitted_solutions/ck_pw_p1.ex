@@ -73,9 +73,7 @@ defmodule Decode do
 
     i1bin = :binary.bin_to_list(i1)
     len = length(i1bin)
-    base_chars = comparison_chars
-
-    Enum.map(base_chars, fn char ->
+    Enum.map(comparison_chars, fn char ->
       # buffer_for = for _i <- 1..(len) do
       #   char
       # end
@@ -112,9 +110,6 @@ defmodule Decode do
 
     buffer_for = for i <- 0..(len - 1) do
       Enum.at(chars, Integer.mod(i, 3))
-      # chars
-      # |> Enum.at(Integer.mod(i, 3))
-      # |> :binary.bin_to_list()
     end
     |> IO.inspect(label: "buffer_for")
 
@@ -122,45 +117,119 @@ defmodule Decode do
 
     x_str = xorred
     |> Enum.reverse()
-    # |> IO.inspect(label: "bxor lists")
     |> to_string()
-    |> IO.inspect(label: "LIST to string")
-    # |> encode16(case: :lower)
-
 
     m_str = Enum.map(index_bin, fn {char, idx}  ->
       bxor(char, Enum.at(chars, Integer.mod(idx, 3)))
     end)
     |> to_string()
-    |> IO.inspect(label: "LIST to string")
     |> encode16(case: :lower)
-
-    # (x_str == m_str)
-    # |> IO.inspect(label: "bool?")
-    # xorred
-    # codes =
-    #   Enum.map(chars, fn char ->
-    #     # <<val>> = char
-    #     # val
-    #     char
-    #   end)
-    #   |> IO.inspect(label: "CODES")
-
-    # i1bin
-    # |> Enum.chunk_every(key_len)
-    # |> Enum.flat_map(fn chunk ->
-    #   Enum.zip_reduce(chunk, codes, [], fn one, two, acc ->
-    #     [bxor(one, two) | acc]
-    #   end)
-    #   |> Enum.reverse()
-    #   |> IO.inspect(label: "KEY XOR")
-    # end)
-    # |> to_string()
-
-    # |> Enum.reverse()
-    #   bxor(char, 73)
-    # end)
   end
+
+  def distance(string1, string2) do
+    bs1 = to_charlist(string1)
+    bs2 = to_charlist(string2)
+
+    Enum.zip_reduce(bs1, bs2, 0, fn one, two, acc ->
+      xor = bxor(one, two)
+      xor_digits = Integer.digits(xor, 2)
+      xor_sum = Enum.sum(xor_digits)
+      |> IO.inspect(label: "sum")
+      acc + xor_sum
+    end)
+  end
+
+
+    # distance/2 false-starts
+    # length(bs1)  |> IO.inspect(label: "")
+    # length(bs2)  |> IO.inspect(label: "")
+
+    # l1 = Enum.flat_map(bs1, fn one ->
+    #   Integer.digits(one, 2)
+    #   |> IO.inspect(label: "")
+    # end)
+    # |> length
+    # |> IO.inspect(label: "LENGTH1")
+    # # |> IO.inspect(label: "list ONE")
+    # l2 = Enum.flat_map(bs2, fn two ->
+    #   Integer.digits(two, 2)
+    #   |> IO.inspect(label: "")
+    # end)
+    # |> length
+    # |> IO.inspect(label: "LENGTH2")
+    # |> IO.inspect(label: "list TWO")
+
+    # Enum.zip_reduce(l1, l2, 0, fn one, two, acc ->
+    #   acc + if one == two do
+    #     0
+    #   else
+    #     1
+    #   end
+    #   # |> IO.inspect(label: "curr accum")
+    # end)
+    # Enum.zip_reduce(bs1, bs2, 0, fn one, two, acc ->
+
+      # l1 = Integer.digits(one, 2)
+      # |> IO.inspect(label: "")
+      # l2 = Integer.digits(two, 2)
+      # |> IO.inspect(label: "")
+      # len1 = length(l1)
+      # |> IO.inspect(label: "LENGTH")
+      # len2 = length(l2)
+      # |> IO.inspect(label: "LENGTH")
+      # len = if len1 > len2 do
+      #   len1
+      # else
+      #   len2
+      # end
+
+      # Enum.reduce(0..(len-1), acc, fn i, inner_acc ->
+      #   incr = if Enum.at(l1, i) == Enum.at(l2, i) do
+      #     0
+      #   else
+      #     1
+      #   end
+      #   inner_acc + incr
+      # end)
+      # |> IO.inspect(label: "inner accum")
+    # end)
+
+    # Enum.reduce(bs1, {bs1, bs2, 0}, fn _, {l1, l2, a1} ->
+    #   [h1 | t1] = l1
+    #   # Integer.digits(h1), 2)
+    #   # h1 |> IO.inspect(label: "h1")
+    #   [h2 | t2] = l2
+    #   # h2 |> IO.inspect(label: "h2")
+    #   # diff = Integer.digits(h1, 2) - Integer.digits(h2, 2)
+
+    #   a1 |> IO.inspect(label: "OUTER accumulator")
+    #   a_diff = Enum.zip_reduce(Integer.digits(h1, 2), Integer.digits(h2, 2), a1, fn one, two, acc ->
+    #     acc + if one == two do
+    #       0
+    #     else
+    #       1
+    #     end
+    #     |> IO.inspect(label: "curr accum")
+
+    #   end)
+    #   # |> IO.inspect(label: "ADIFF")
+    #   {t1, t2, a_diff}
+    # end)
+    # |> IO.inspect(label: "reduction")
+    # Enum.reduce(bs1, fn _ ->
+
+    # end)
+    # (bs1 - bs2) |> IO.inspect(label: "diff")
+    # Enum.zip_reduce(bs1, bs2, 0, fn one, two, acc ->
+    #   bump =  if one == two do
+    #     1
+    #   else
+    #     0
+    #   end
+    #   acc + bump
+    # end)
+    # |> IO.inspect(label: "")
+
 
   defp sort(list) do
     Enum.sort(list, fn {one, _, _}, {two, _, _} ->
@@ -227,4 +296,24 @@ I go crazy when I hear a cymbal"
 
     assert Decode.five(input, key) == "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
   end
+
+  test "distance/2" do
+    one = "this is a test"
+    two = "wokka wokka!!!"
+    assert Decode.distance(one, two) == 37
+  end
+
+  # test "six/2" do
+  #   {:ok, contents} = File.read("cryptopals/set1/challenge1/data/4.txt")
+  #   list = String.split(contents, "\n")
+
+  #   assert Decode.four(list) == {29, "5", "Now that the party is jumping\n"}
+
+#     input = "Burning 'em, if you ain't quick and nimble
+# I go crazy when I hear a cymbal"
+#     # """
+#     key = "ICE"
+
+#     assert Decode.five(input, key) == "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
+  # end
 end

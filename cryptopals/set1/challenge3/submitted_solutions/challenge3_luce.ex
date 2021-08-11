@@ -18,8 +18,43 @@ defmodule CryptoPals.Set1.Challenge3 do
   """
 
   @average_word_length 4.7
+
+  # {char, number of tiles, tile point value}
+  @scrabble [
+    {'E', 12, 1},
+    {'A', 9, 1},
+    {'I', 8, 1},
+    {'O', 8, 1},
+    {'N', 6, 1},
+    {'R', 6, 1},
+    {'T', 6, 1},
+    {'L', 4, 1},
+    {'S', 4, 1},
+    {'U', 4, 1},
+    {'D', 4, 2},
+    {'G', 3, 2},
+    {'B', 2, 3},
+    {'C', 2, 3},
+    {'M', 2, 3},
+    {'P', 2, 3},
+    {'F', 2, 4},
+    {'H', 2, 4},
+    {'V', 2, 4},
+    {'W', 2, 4},
+    {'Y', 2, 4},
+    {'K', 1, 5},
+    {'J', 1, 8},
+    {'X', 1, 8},
+    {'Q', 1, 10},
+    {'Z', 1, 10}
+  ]
+
+  @max_tile_score elem(hd(@scrabble), 1) / elem(hd(@scrabble), 2)
+
   # <<32>>
   @space " "
+
+  # TODO: adapt to byte stream
 
   @spec re_xorcist(String.t()) :: String.t()
   def re_xorcist(string) do
@@ -65,21 +100,18 @@ defmodule CryptoPals.Set1.Challenge3 do
   @spec score_message(binary()) :: float()
   defp score_message(message) do
     weighted_scores = [
-      {2, score_by_printability(message)},
-      {1, score_by_word_length(message)}
+      {3, score_by_printability(message)},
+      {3, score_by_scrabble(message)},
+      {2, score_by_word_length(message)}
     ]
-
-    # TODO: score by more criteria and aggregate a message's scores
 
     {weights, _scores} = Enum.unzip(weighted_scores)
 
-    agg_score =
+    _agg_score =
       weighted_scores
       |> Enum.map(fn {w, s} -> w * s end)
       |> Enum.sum()
       |> Kernel./(Enum.sum(weights))
-
-    agg_score
   end
 
   @spec score_by_printability(binary()) :: float()
@@ -88,6 +120,28 @@ defmodule CryptoPals.Set1.Challenge3 do
       true -> 0.0
       false -> 1.0
     end
+  end
+
+  # this score is normalized LOCALLY, which is to say: with respect to its
+  # potential range; it is NOT normalized across its total actual output for a
+  # given dataset)
+  @spec score_by_scrabble(binary()) :: float()
+  defp score_by_scrabble(message) do
+    message
+    |> String.upcase(:ascii)
+    |> String.to_charlist()
+    |> Enum.map(&score_by_scrabble_tile/1)
+    |> Enum.sum()
+    |> Kernel./(String.length(message))
+  end
+
+  defp score_by_scrabble_tile(char) do
+    finder = fn
+      {[^char], freq, value} -> freq / value
+      _ -> nil
+    end
+
+    1 - (Enum.find_value(@scrabble, finder) || 0) / @max_tile_score
   end
 
   @spec score_by_word_length(binary()) :: float()

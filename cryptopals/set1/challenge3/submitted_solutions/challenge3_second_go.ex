@@ -29,8 +29,15 @@ defmodule CryptoPals.Set1.Challenge3 do
       |> Enum.map(fn integer ->
         bxor(character, integer)
       end)
-      |> List.to_string()
+
+      # |> List.to_string()
     end)
+    # |> filter_printable()
+    |> score_spaces()
+    |> Enum.sort_by(fn {_list, score} -> score end)
+    |> List.first()
+    |> elem(0)
+    |> List.to_string()
     |> IO.inspect(limit: :infinity)
 
     # XOR it against each possible character
@@ -41,9 +48,31 @@ defmodule CryptoPals.Set1.Challenge3 do
     # return the result with the "best" score
   end
 
+  @make_characters MapSet.new(0..255)
   defp make_characters do
     # make each ascii character (each being a byte)
-    0..255
+    @make_characters
+  end
+
+  @printable_characters MapSet.new(32..126)
+  defp filter_printable(charlists) do
+    Enum.filter(charlists, fn list ->
+      Enum.all?(list, fn char ->
+        char in @printable_characters
+      end)
+    end)
+  end
+
+  @average_word_length 5
+  @spec score_spaces(List.t(List.t())) :: [{List.t(), integer()}]
+  defp score_spaces(lists) do
+    Enum.map(lists, fn list ->
+      space_target = length(list) / (@average_word_length + 1)
+      count = Enum.count(list, fn char -> char == 32 end)
+      score = abs(count - space_target)
+
+      {list, score}
+    end)
   end
 end
 

@@ -100,9 +100,9 @@ defmodule CryptoPals.Set1.Challenge3 do
   @spec score_message(binary()) :: float()
   defp score_message(message) do
     weighted_scores = [
-      {3, score_by_printability(message)},
-      {3, score_by_scrabble(message)},
-      {2, score_by_word_length(message)}
+      {6, score_by_scrabble(message)},
+      {2, score_by_printability(message)},
+      {1, score_by_word_length(message)}
     ]
 
     {weights, _scores} = Enum.unzip(weighted_scores)
@@ -116,10 +116,14 @@ defmodule CryptoPals.Set1.Challenge3 do
 
   @spec score_by_printability(binary()) :: float()
   defp score_by_printability(message) do
-    case List.ascii_printable?(String.to_charlist(message)) do
-      true -> 0.0
-      false -> 1.0
-    end
+    percent_printable =
+      message
+      |> String.graphemes()
+      |> Enum.filter(&String.printable?/1)
+      |> Enum.count()
+      |> Kernel./(String.length(message))
+
+    1 - percent_printable
   end
 
   # this score is normalized LOCALLY, which is to say: with respect to its

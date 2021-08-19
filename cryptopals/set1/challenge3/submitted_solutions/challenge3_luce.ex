@@ -60,12 +60,14 @@ defmodule CryptoPals.Set1.Challenge3 do
   def re_xorcist(string) do
     bin = decode_hex_string_to_binary(string)
 
-    list_all_characters()
-    |> Enum.map(&xor_encrypt(bin, &1))
-    |> Enum.map(&score_message/1)
-    |> Enum.sort_by(&elem(&1, 1), :asc)
-    # purely for pretty printing purposes
-    |> Enum.take(26)
+    for char <- list_all_characters() do
+      bin
+      |> xor_encrypt(char)
+      |> score_message()
+    end
+    |> Enum.sort_by(&elem(&1, 1), :desc)
+    # purely for pretty printing purposes:
+    |> Enum.take(10)
     |> IO.inspect()
     |> List.first()
     |> elem(2)
@@ -74,9 +76,9 @@ defmodule CryptoPals.Set1.Challenge3 do
   @spec xor_encrypt(binary(), byte()) :: {byte(), binary()}
   defp xor_encrypt(bin, char) do
     bin =
-      bin
-      |> decode_binary_to_charlist()
-      |> Enum.map(&bxor(&1, char))
+      for <<c <- bin>> do
+        bxor(c, char)
+      end
       |> encode_charlist_to_binary()
 
     {char, bin}
@@ -84,9 +86,6 @@ defmodule CryptoPals.Set1.Challenge3 do
 
   @spec encode_charlist_to_binary(charlist()) :: binary()
   defp encode_charlist_to_binary(chars), do: List.to_string(chars)
-
-  @spec decode_binary_to_charlist(binary()) :: charlist()
-  defp decode_binary_to_charlist(bin), do: String.to_charlist(bin)
 
   @spec decode_hex_string_to_binary(String.t()) :: binary()
   defp decode_hex_string_to_binary(str), do: Base.decode16!(str, case: :lower)
@@ -107,23 +106,29 @@ defmodule CryptoPals.Set1.Challenge3 do
 
     {weights, _scores} = Enum.unzip(weighted_scores)
 
-    _agg_score =
-      weighted_scores
-      |> Enum.map(fn {w, s} -> w * s end)
-      |> Enum.sum()
-      |> Kernel./(Enum.sum(weights))
+    weights
+    |> Enum.map(&abs/1)
+    |> Enum.sum()
+    |> case do
+      0 ->
+        0
+
+      total_weight ->
+        weighted_scores
+        |> Enum.map(fn {w, s} -> w * s end)
+        |> Enum.sum()
+        |> Kernel./(total_weight)
+    end
   end
 
   @spec score_by_printability(binary()) :: float()
   defp score_by_printability(message) do
-    percent_printable =
+    _percent_printable =
       message
       |> String.graphemes()
       |> Enum.filter(&String.printable?/1)
       |> Enum.count()
       |> Kernel./(String.length(message))
-
-    1 - percent_printable
   end
 
   # this score is normalized LOCALLY, which is to say: with respect to its
@@ -145,7 +150,7 @@ defmodule CryptoPals.Set1.Challenge3 do
       _ -> nil
     end
 
-    1 - (Enum.find_value(@scrabble, finder) || 0) / @max_tile_score
+    (Enum.find_value(@scrabble, finder) || 0) / @max_tile_score
   end
 
   @spec score_by_word_length(binary()) :: float()
@@ -161,7 +166,7 @@ defmodule CryptoPals.Set1.Challenge3 do
     delta = abs(avg_word_length / @average_word_length - 1)
     normal = total_num_chars / @average_word_length - 1
 
-    delta / normal
+    1 - delta / normal
   end
 end
 

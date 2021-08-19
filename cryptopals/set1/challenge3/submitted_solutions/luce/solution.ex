@@ -54,23 +54,25 @@ defmodule CryptoPals.Set1.Challenge3 do
   # <<32>>
   @space " "
 
+  @printability_weight 0
+  @scrabble_weight 4
+  @word_length_weight 1
+
   # TODO: adapt to byte stream
 
-  @spec re_xorcist(String.t()) :: String.t()
-  def re_xorcist(string) do
+  @spec re_xorcist(String.t(), keyword()) :: list({integer(), float(), String.t()})
+  def re_xorcist(string, weights \\ []) do
     bin = decode_hex_string_to_binary(string)
 
     for char <- list_all_characters() do
       bin
       |> xor_encrypt(char)
-      |> score_message()
+      |> score_message(weights)
     end
     |> Enum.sort_by(&elem(&1, 1), :desc)
     # purely for pretty printing purposes:
     |> Enum.take(10)
     |> IO.inspect()
-    |> List.first()
-    |> elem(2)
   end
 
   @spec xor_encrypt(binary(), byte()) :: {byte(), binary()}
@@ -93,15 +95,29 @@ defmodule CryptoPals.Set1.Challenge3 do
   @spec list_all_characters() :: [byte()]
   defp list_all_characters, do: 0..255
 
-  @spec score_message({byte(), binary()}) :: {byte(), float(), binary()}
-  defp score_message({char, message}), do: {char, score_message(message), message}
+  defp score_message(message_maybe_tuple, weights \\ [])
 
-  @spec score_message(binary()) :: float()
-  defp score_message(message) do
+  @spec score_message({byte(), binary()}, keyword()) :: {byte(), float(), binary()}
+  defp score_message({char, message}, weights) do
+    {char, score_message(message, weights), message}
+  end
+
+  # TODO:
+  # return raw scores
+  # unzip and normalize each score type
+  # then weight and compose
+  #   why? the scrabble scorer yields the best information, but it doesn't ever
+  #   score anywhere near 1.0, so the weights will never settle
+  @spec score_message(binary(), keyword()) :: float()
+  defp score_message(message, weights) do
+    printability = Keyword.get(weights, :printability, @printability_weight)
+    scrabble = Keyword.get(weights, :scrabble, @scrabble_weight)
+    word_length = Keyword.get(weights, :word_length, @word_length_weight)
+
     weighted_scores = [
-      {6, score_by_scrabble(message)},
-      {2, score_by_printability(message)},
-      {1, score_by_word_length(message)}
+      {printability, score_by_printability(message)},
+      {scrabble, score_by_scrabble(message)},
+      {word_length, score_by_word_length(message)}
     ]
 
     {weights, _scores} = Enum.unzip(weighted_scores)
@@ -184,10 +200,11 @@ defmodule CryptoPals.Set1.Challenge3Test do
 
   describe "re_xorcist/1" do
     test "given a string, produces a decoded message" do
-      message =
+      {_char, _score, message} =
         Challenge3.re_xorcist(
           "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
         )
+        |> List.first()
 
       assert is_binary(message)
       assert message == "Cooking MC's like a pound of bacon"

@@ -69,6 +69,8 @@ defmodule CryptoPals.Set1.Challenge3 do
       |> xor_encrypt(char)
       |> score_message(weights)
     end
+    |> normalize_scores()
+    # |> apply_weights() # TODO:
     |> Enum.sort_by(&elem(&1, 1), :desc)
     # purely for pretty printing purposes:
     |> Enum.take(10)
@@ -102,39 +104,53 @@ defmodule CryptoPals.Set1.Challenge3 do
     {char, score_message(message, weights), message}
   end
 
+  defp unzip(tuples) do
+    Enum.map(tuples, &Tuple.to_list/1)
+    &unzipp/1)
+  end
+  defp unzipp(tuple) do
+    [hd | rest] = Tuple.to_list(tuple)
+    [hd, unzipp(rest)]
+  end
   # TODO:
   # return raw scores
   # unzip and normalize each score type
   # then weight and compose
   #   why? the scrabble scorer yields the best information, but it doesn't ever
   #   score anywhere near 1.0, so the weights will never settle
+  defp normalize_scores() do
+
+    # printability = Keyword.get(weights, :printability, @printability_weight)
+    # scrabble = Keyword.get(weights, :scrabble, @scrabble_weight)
+    # word_length = Keyword.get(weights, :word_length, @word_length_weight)
+      # {printability, score_by_printability(message)},
+      # {scrabble, score_by_scrabble(message)},
+      # {word_length, score_by_word_length(message)}
+    # {weights, _scores} = Enum.unzip(weighted_scores)
+
+    # weights
+    # |> Enum.map(&abs/1)
+    # |> Enum.sum()
+    # |> case do
+    #   0 ->
+    #     0
+
+    #   total_weight ->
+    #     weighted_scores
+    #     |> Enum.map(fn {w, s} -> w * s end)
+    #     |> Enum.sum()
+    #     |> Kernel./(total_weight)
+    # end
+
+  end
+
   @spec score_message(binary(), keyword()) :: float()
   defp score_message(message, weights) do
-    printability = Keyword.get(weights, :printability, @printability_weight)
-    scrabble = Keyword.get(weights, :scrabble, @scrabble_weight)
-    word_length = Keyword.get(weights, :word_length, @word_length_weight)
-
-    weighted_scores = [
-      {printability, score_by_printability(message)},
-      {scrabble, score_by_scrabble(message)},
-      {word_length, score_by_word_length(message)}
-    ]
-
-    {weights, _scores} = Enum.unzip(weighted_scores)
-
-    weights
-    |> Enum.map(&abs/1)
-    |> Enum.sum()
-    |> case do
-      0 ->
-        0
-
-      total_weight ->
-        weighted_scores
-        |> Enum.map(fn {w, s} -> w * s end)
-        |> Enum.sum()
-        |> Kernel./(total_weight)
-    end
+    {
+      score_by_printability(message),
+      score_by_scrabble(message),
+      score_by_word_length(message)
+    }
   end
 
   @spec score_by_printability(binary()) :: float()

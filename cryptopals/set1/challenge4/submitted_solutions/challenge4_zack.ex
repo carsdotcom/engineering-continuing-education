@@ -28,14 +28,15 @@ defmodule CryptoPals.Set1.Challenge4 do
   @letters_sorted_by_frequency ~w(e a r i o t n s l c u d p m h g b f y w k v x z j q)
   @range 26..1
   @letter_scores @letters_sorted_by_frequency |> Enum.zip(@range) |> Map.new()
-  @file_path Path.expand(__DIR__) <> "/challenge4.txt"
+  @file_path Path.expand("../challenge_materials", __DIR__) <> "/challenge4.txt"
 
   @spec run() :: binary()
   def run do
     @file_path
     |> File.stream!([:line])
     |> Stream.map(&String.trim_trailing/1)
-    |> Stream.map(&decrypt/1)
+    |> Task.async_stream(&decrypt/1, timeout: :timer.minutes(5))
+    |> Stream.map(&elem(&1, 1))
     |> Enum.max_by(&take_score/1)
     |> elem(0)
   end

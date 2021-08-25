@@ -1,16 +1,24 @@
 defmodule CryptoPals.Set1.Challenge1 do
   @moduledoc """
   Source: 'https://cryptopals.com/sets/1/challenges/1'
-  
-  Solution code should be written here. 
-  
+
+  Solution code should be written here.
+
   To run tests, paste the following into the commandline from the project root.
   ```bash
-  elixir -r cryptopals/set1/challenge1/submitted_solutions/ck_pw_p1.ex
+  elixir -r cryptopals/set1/challenge1/elixir_template/challenge1_template.ex
   ```
-  
+
   When submitting, change the name of this file to reflect the names of those that participated in the solution. (ex: `challenge1_mary_linda_harriet.ex`)
   Then create a PR to add your file to the repo under cryptopals/set1/challenge1/submitted_solutions/.
+
+  PROBLEM:
+    Convert hex to base64
+    The string: "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
+
+    Should produce: "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
+
+    So go ahead and make that happen. You'll need to use this code for the rest of the exercises.
   """
 
   @doc """

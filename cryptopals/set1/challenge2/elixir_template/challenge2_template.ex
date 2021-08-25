@@ -11,6 +11,16 @@ defmodule CryptoPals.Set1.Challenge2 do
 
   When submitting, change the name of this file to reflect the names of those that participated in the solution. (ex: `challenge1_mary_linda_harriet.ex`)
   Then create a PR to add your file to the repo under `cryptopals/set1/challenge1/submitted_solutions/`.
+
+  PROBLEM:
+  Fixed XOR
+  Write a function that takes two equal-length buffers and produces their XOR combination.
+
+  If your function works properly, then when you feed it the string: "1c0111001f010100061a024b53535009181c"
+
+  ... after hex decoding, and when XOR'd against: "686974207468652062756c6c277320657965"
+
+  ... should produce: "746865206b696420646f6e277420706c6179"
   """
 
   @doc """

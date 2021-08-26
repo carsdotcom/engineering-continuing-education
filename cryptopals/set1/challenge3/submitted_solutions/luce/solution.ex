@@ -104,14 +104,52 @@ defmodule CryptoPals.Set1.Challenge3 do
     {char, score_message(message, weights), message}
   end
 
-  defp unzip(tuples) do
-    Enum.map(tuples, &Tuple.to_list/1)
-    &unzipp/1)
+  @spec to_list(tuple() | list()) :: list()
+  defp to_list(tuple) when is_tuple(tuple), do: Tuple.to_list(tuple)
+  defp to_list(list) when is_list(list), do: list
+
+  @doc """
+  Like Enum.zip/2 but concatenates the elements rather than pairing them in
+  tuples. Useful if you want to append one or more elements to a list of lists
+  in one pass.
+
+  NB: the recursion and list concatenation seems like a poor performance choice,
+  but that's literally how Erlang does it, so :shrug:.
+  """
+  @spec zip(list(), list(list())) :: list(list())
+  def zip([elem_hd | elems], [acc_hd | accs])
+    [acc_hd ++ [elem_hd] | zip(elems, accs)]
   end
-  defp unzipp(tuple) do
-    [hd | rest] = Tuple.to_list(tuple)
-    [hd, unzipp(rest)]
+  @spec zip(list(), list(list()) | []) :: []
+  def zip(_, []), do: []
+  def zip([], _), do: []
+
+  @doc """
+  Like Enum.unzip/1, but unzips a list of tuples of arbitrary length, quitting
+  when any tuple is exhausted. By the nature of its implementation, it also
+  works for lists of lists.
+      iex> CryptoPals.Set1.Challenge3.unzip([
+      ...>   { 1 ,  2 ,  3 ,  4 },
+      ...>   {"a", "b", "c", "d"},
+      ...> ])
+      [[1, "a"], [2, "b"], [3, "c"], [4, "d"]]
+      iex> CryptoPals.Set1.Challenge3.unzip([
+      ...>   { 1 ,  2 ,  3 ,  4 },
+      ...>   {'A', 'B'          },
+      ...>   {"a", "b", "c", "d"},
+      ...> ])
+      [[1, 'A', "a"], [2, 'B', "b"]]
+  TODO: option to pad short tuples?
+  TODO: option to output list of tuples?
+  """
+  @spec unzip(list(tuple() | list())) :: list(list())
+  def unzip(tuples) do
+    Enum.reduce(tuples, [], fn
+      tuple, [] -> Enum.map(to_list(tuple), &[&1])
+      tuple, acc -> zip(to_list(tuple), acc)
+    end)
   end
+
   # TODO:
   # return raw scores
   # unzip and normalize each score type
@@ -119,13 +157,12 @@ defmodule CryptoPals.Set1.Challenge3 do
   #   why? the scrabble scorer yields the best information, but it doesn't ever
   #   score anywhere near 1.0, so the weights will never settle
   defp normalize_scores() do
-
     # printability = Keyword.get(weights, :printability, @printability_weight)
     # scrabble = Keyword.get(weights, :scrabble, @scrabble_weight)
     # word_length = Keyword.get(weights, :word_length, @word_length_weight)
-      # {printability, score_by_printability(message)},
-      # {scrabble, score_by_scrabble(message)},
-      # {word_length, score_by_word_length(message)}
+    # {printability, score_by_printability(message)},
+    # {scrabble, score_by_scrabble(message)},
+    # {word_length, score_by_word_length(message)}
     # {weights, _scores} = Enum.unzip(weighted_scores)
 
     # weights
@@ -141,7 +178,6 @@ defmodule CryptoPals.Set1.Challenge3 do
     #     |> Enum.sum()
     #     |> Kernel./(total_weight)
     # end
-
   end
 
   @spec score_message(binary(), keyword()) :: float()

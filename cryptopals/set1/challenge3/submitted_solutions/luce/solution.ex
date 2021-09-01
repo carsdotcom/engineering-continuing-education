@@ -156,7 +156,17 @@ defmodule CryptoPals.Set1.Challenge3 do
   # then weight and compose
   #   why? the scrabble scorer yields the best information, but it doesn't ever
   #   score anywhere near 1.0, so the weights will never settle
-  defp normalize_scores() do
+  @spec normalize_scores(list(tuple())) :: list(tuple())
+  defp normalize_scores(scores) do
+    scores
+    |> unzip()
+    |> Enum.map(fn scores ->
+      min = Enum.min(score)
+      max = Enum.max(scores)
+      d = max - min
+    end)
+
+
     # printability = Keyword.get(weights, :printability, @printability_weight)
     # scrabble = Keyword.get(weights, :scrabble, @scrabble_weight)
     # word_length = Keyword.get(weights, :word_length, @word_length_weight)

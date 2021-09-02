@@ -97,13 +97,6 @@ defmodule CryptoPals.Set1.Challenge3 do
   @spec list_all_characters() :: [byte()]
   defp list_all_characters, do: 0..255
 
-  defp score_message(message_maybe_tuple, weights \\ [])
-
-  @spec score_message({byte(), binary()}, keyword()) :: {byte(), float(), binary()}
-  defp score_message({char, message}, weights) do
-    {char, score_message(message, weights), message}
-  end
-
   @spec to_list(tuple() | list()) :: list()
   defp to_list(tuple) when is_tuple(tuple), do: Tuple.to_list(tuple)
   defp to_list(list) when is_list(list), do: list
@@ -116,10 +109,15 @@ defmodule CryptoPals.Set1.Challenge3 do
   NB: the recursion and list concatenation seems like a poor performance choice,
   but that's literally how Erlang does it, so :shrug:.
   """
-  @spec zip(list(), list(list())) :: list(list())
-  def zip([elem_hd | elems], [acc_hd | accs])
-    [acc_hd ++ [elem_hd] | zip(elems, accs)]
+  @spec zip(tuple(), list(tuple() | list())) :: list(list())
+  def zip(elems, accs) when is_tuple(elems) do
+    zip(to_list(elems), accs)
   end
+
+  def zip([elem_hd | elems], [acc_hd | accs]) do
+    [to_list(acc_hd) ++ [elem_hd] | zip(elems, accs)]
+  end
+
   @spec zip(list(), list(list()) | []) :: []
   def zip(_, []), do: []
   def zip([], _), do: []
@@ -145,49 +143,123 @@ defmodule CryptoPals.Set1.Challenge3 do
   @spec unzip(list(tuple() | list())) :: list(list())
   def unzip(tuples) do
     Enum.reduce(tuples, [], fn
-      tuple, [] -> Enum.map(to_list(tuple), &[&1])
-      tuple, acc -> zip(to_list(tuple), acc)
+      tuple, [] -> Enum.map(tuple, &[&1])
+      tuple, acc -> zip(tuple, acc)
     end)
   end
 
-  # TODO:
-  # return raw scores
-  # unzip and normalize each score type
-  # then weight and compose
-  #   why? the scrabble scorer yields the best information, but it doesn't ever
-  #   score anywhere near 1.0, so the weights will never settle
-  @spec normalize_scores(list(tuple())) :: list(tuple())
-  defp normalize_scores(scores) do
-    scores
-    |> unzip()
-    |> Enum.map(fn scores ->
-      min = Enum.min(score)
-      max = Enum.max(scores)
-      d = max - min
-    end)
+  # DEBUG: many iterations version
+  # @spec normalize_scores(list(tuple())) :: list(tuple())
+  # defp normalize_scores(n_tuple_list) do
+  #   n_tuple_list
+  #   |> unzip()
+  #   |> Enum.map(fn scores ->
+  #     with min <- Enum.min(scores),
+  #          max <- Enum.max(scores),
+  #          d <- max - min do
+  #       Enum.map(scores, fn s ->
+  #         s / (max - min) - min
+  #       end)
+  #     end
+  #   end)
+  # end
 
+  # :: [[min0, max0, mod0], [min1, max1, mod1], ..., [mod_n_min, mod_n_max, mod_n_score]]
+  @spec compare_extrema([
+          min :: float(),
+          max :: float(),
+          score :: float()
+        ]) :: [
+          min :: float(),
+          max :: float()
+        ]
+  defp compare_extrema([min, max, score]) do
+    [min(min, score), max(max, score)]
+  end
 
-    # printability = Keyword.get(weights, :printability, @printability_weight)
-    # scrabble = Keyword.get(weights, :scrabble, @scrabble_weight)
-    # word_length = Keyword.get(weights, :word_length, @word_length_weight)
-    # {printability, score_by_printability(message)},
-    # {scrabble, score_by_scrabble(message)},
-    # {word_length, score_by_word_length(message)}
-    # {weights, _scores} = Enum.unzip(weighted_scores)
+  # extrema :: [[min0, max0], [min1, max1], ..., module_n_extrema]
+  @spec collate_extrema(
+          # n_tuple :: {mod0, mod1, ..., module_n_score}
+          n_tuple :: tuple(),
+          # acc :: [[min0, max0], [min1, max1], ..., module_n_extrema]
+          acc ::
+            list([
+              min :: float(),
+              max :: float()
+            ])
+        ) ::
+          extrema ::
+          list([
+            min :: float(),
+            max :: float()
+          ])
+  defp collate_extrema(n_tuple, acc) do
+    Enum.map(zip(n_tuple, acc), &compare_extrema/1)
+  end
 
-    # weights
-    # |> Enum.map(&abs/1)
-    # |> Enum.sum()
-    # |> case do
-    #   0 ->
-    #     0
+  @spec normalize_score(
+          min :: float(),
+          max :: float(),
+          score :: float()
+        ) ::
+          float()
+  defp normalize_score(min, max, score) do
+    score / (max - min) - min
+  end
 
-    #   total_weight ->
-    #     weighted_scores
-    #     |> Enum.map(fn {w, s} -> w * s end)
-    #     |> Enum.sum()
-    #     |> Kernel./(total_weight)
-    # end
+  @spec do_normalize_scores(
+          # zipped_scores :: [[min0, max0, scores0], [min1, max1, scores1], ..., [module_n_extrema | module_n_scores]]
+          zipped_scores :: [
+            min :: float(),
+            max :: float(),
+            # scores :: [mod_n_score0, mod_n_score1, ..., mod_n_score255]
+            scores :: list(float())
+          ]
+        ) :: list(float())
+  defp do_normalize_scores([min, max, scores]) do
+    Enum.map(scores, &normalize_score(min, max, &1))
+  end
+
+  @spec normalize_scores(
+          # n_tuple_list :: [n_tuple0, n_tuple1, ..., char_scores_255]
+          n_tuple_list :: list(tuple())
+        ) :: list(tuple())
+  defp normalize_scores(n_tuple_list) do
+    extrema = Enum.reduce(n_tuple_list, &collate_extrema/2)
+    Enum.map(zip(n_tuple_list, extrema), &do_normalize_scores/1)
+  end
+
+  # TODO: figure out how to reliably tag messages' scores so we can attch
+  # weights to them AFTER they've been normalized; and we'd like to normalize
+  # them in one pass rather than n passes (where n is number of scoring modules)
+
+  # printability = Keyword.get(weights, :printability, @printability_weight)
+  # scrabble = Keyword.get(weights, :scrabble, @scrabble_weight)
+  # word_length = Keyword.get(weights, :word_length, @word_length_weight)
+  # {printability, score_by_printability(message)},
+  # {scrabble, score_by_scrabble(message)},
+  # {word_length, score_by_word_length(message)}
+  # {weights, _scores} = Enum.unzip(weighted_scores)
+
+  # weights
+  # |> Enum.map(&abs/1)
+  # |> Enum.sum()
+  # |> case do
+  #   0 ->
+  #     0
+
+  #   total_weight ->
+  #     weighted_scores
+  #     |> Enum.map(fn {w, s} -> w * s end)
+  #     |> Enum.sum()
+  #     |> Kernel./(total_weight)
+  # end
+
+  defp score_message(message_maybe_tuple, weights \\ [])
+
+  @spec score_message({byte(), binary()}, keyword()) :: {byte(), float(), binary()}
+  defp score_message({char, message}, weights) do
+    {char, score_message(message, weights), message}
   end
 
   @spec score_message(binary(), keyword()) :: float()

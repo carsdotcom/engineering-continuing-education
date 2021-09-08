@@ -69,18 +69,23 @@ defmodule CryptoPals.Set1.Challenge4 do
     |> Enum.map(&decode_hex_to_binary/1)
     |> Enum.flat_map(&evaluate/1)
     |> Enum.sort_by(fn {_character, _binary, score} -> score end, :desc)
-    |> Enum.take(10)
+    |> List.first()
+    |> then(fn {_character, binary, _score} -> binary end)
   end
 
+  @spec evaluate([integer()]) :: [{integer(), binary(), float()}]
   defp evaluate(decoded_byte_list) do
-    Enum.map(make_characters(), fn character ->
-      Enum.map(decoded_byte_list, fn integer ->
-        bxor(character, integer)
-      end)
-      |> List.to_string()
-      |> then(fn binary -> {character, binary, score_by_scrabble(binary)} end)
-    end)
+    make_characters()
+    |> Enum.map(&evaluate_character(&1, decoded_byte_list))
     |> Enum.filter(fn {_character, binary, _score} -> String.printable?(binary) end)
+  end
+
+  @spec evaluate_character(integer(), [integer()]) :: {integer(), binary(), float()}
+  defp evaluate_character(character, decoded_byte_list) do
+    decoded_byte_list
+    |> Enum.map(fn integer -> bxor(character, integer) end)
+    |> List.to_string()
+    |> then(fn binary -> {character, binary, score_by_scrabble(binary)} end)
   end
 
   @spec lines() :: [[integer()]]
@@ -95,15 +100,6 @@ defmodule CryptoPals.Set1.Challenge4 do
   defp make_characters do
     # make each ascii character (each being a byte)
     @make_characters
-  end
-
-  @printable_characters MapSet.new(32..126)
-  defp filter_printable(charlists) do
-    Enum.filter(charlists, fn list ->
-      Enum.all?(list, fn char ->
-        char in @printable_characters
-      end)
-    end)
   end
 
   @spec decode_hex_to_binary(String.t()) :: [integer()]
@@ -147,8 +143,7 @@ defmodule CryptoPals.Set1.Challenge4Test do
 
   describe "xorcist/1" do
     test "given a file, produces list of strings" do
-      Challenge4.xorcist()
-      |> IO.inspect()
+      assert Challenge4.xorcist() == "Now that the party is jumping\n"
     end
   end
 end

@@ -27,6 +27,38 @@ defmodule CryptoPals.Set1.Challenge4 do
   This is an example fn to serve the example test file. Please delete it and write your own ;)
   """
 
+  # {char, number of tiles, tile point value}
+  @scrabble [
+    {'E', 12, 1},
+    {'A', 9, 1},
+    {'I', 8, 1},
+    {'O', 8, 1},
+    {'N', 6, 1},
+    {'R', 6, 1},
+    {'T', 6, 1},
+    {'L', 4, 1},
+    {'S', 4, 1},
+    {'U', 4, 1},
+    {'D', 4, 2},
+    {'G', 3, 2},
+    {'B', 2, 3},
+    {'C', 2, 3},
+    {'M', 2, 3},
+    {'P', 2, 3},
+    {'F', 2, 4},
+    {'H', 2, 4},
+    {'V', 2, 4},
+    {'W', 2, 4},
+    {'Y', 2, 4},
+    {'K', 1, 5},
+    {'J', 1, 8},
+    {'X', 1, 8},
+    {'Q', 1, 10},
+    {'Z', 1, 10}
+  ]
+
+  @max_tile_score elem(hd(@scrabble), 1) / elem(hd(@scrabble), 2)
+
   # Taken from this article https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html
 
   @file_path Path.expand(__DIR__) <> "/challenge4.txt"
@@ -36,11 +68,8 @@ defmodule CryptoPals.Set1.Challenge4 do
     lines()
     |> Enum.map(&decode_hex_to_binary/1)
     |> Enum.flat_map(&evaluate/1)
-    |> score_spaces()
-    |> Enum.sort_by(fn {_list, score} -> score end)
-    |> List.take(10)
-    |> Enum.map(&elem(&1, 0))
-    |> List.to_string()
+    |> Enum.sort_by(fn {_character, _binary, score} -> score end, :desc)
+    |> Enum.take(10)
   end
 
   defp evaluate(decoded_byte_list) do
@@ -48,7 +77,10 @@ defmodule CryptoPals.Set1.Challenge4 do
       Enum.map(decoded_byte_list, fn integer ->
         bxor(character, integer)
       end)
+      |> List.to_string()
+      |> then(fn binary -> {character, binary, score_by_scrabble(binary)} end)
     end)
+    |> Enum.filter(fn {_character, binary, _score} -> String.printable?(binary) end)
   end
 
   @spec lines() :: [[integer()]]
@@ -81,30 +113,23 @@ defmodule CryptoPals.Set1.Challenge4 do
     |> :binary.bin_to_list()
   end
 
-  @letters_sorted_by_frequency ~w(e a r i o t n s l c u d p m h g b f y w k v x z j q)
-  @range 26..1
-  @letter_scores @letters_sorted_by_frequency |> Enum.zip(@range) |> Map.new()
-
-  @spec score(String.t()) :: {String.t(), non_neg_integer()}
-  defp score(string) do
-    {string,
-     string
-     |> String.graphemes()
-     |> Enum.reduce(0, fn grapheme, running_total ->
-       running_total + Map.get(@letter_scores, grapheme, 0)
-     end)}
+  @spec score_by_scrabble(binary()) :: float()
+  defp score_by_scrabble(message) do
+    message
+    |> String.upcase(:ascii)
+    |> String.to_charlist()
+    |> Enum.map(&score_by_scrabble_tile/1)
+    |> Enum.sum()
+    |> Kernel./(String.length(message))
   end
 
-  @average_word_length 4.7
-  @spec score_spaces(List.t(List.t())) :: [{List.t(), integer()}]
-  defp score_spaces(lists) do
-    Enum.map(lists, fn list ->
-      space_target = length(list) / (@average_word_length + 1)
-      count = Enum.count(list, fn char -> char == 32 end)
-      score = abs(count - space_target)
+  defp score_by_scrabble_tile(char) do
+    finder = fn
+      {[^char], freq, value} -> freq / value
+      _ -> nil
+    end
 
-      {list, score}
-    end)
+    (Enum.find_value(@scrabble, finder) || 0) / @max_tile_score
   end
 end
 

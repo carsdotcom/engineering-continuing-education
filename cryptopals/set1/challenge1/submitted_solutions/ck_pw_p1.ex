@@ -214,115 +214,146 @@ ExUnit.start()
 defmodule DecodeTest do
   use ExUnit.Case
 
-  test "one/1" do
-    assert Decode.one(
-             "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
-           ) == "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
-  end
+  # test "one/1" do
+  #   assert Decode.one(
+  #            "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
+  #          ) == "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
+  # end
 
-  test "two/2" do
-    assert Decode.two(
-             "1c0111001f010100061a024b53535009181c",
-             "686974207468652062756c6c277320657965"
-           ) == "746865206b696420646f6e277420706c6179"
-  end
+  # test "two/2" do
+  #   assert Decode.two(
+  #            "1c0111001f010100061a024b53535009181c",
+  #            "686974207468652062756c6c277320657965"
+  #          ) == "746865206b696420646f6e277420706c6179"
+  # end
 
-  test "three" do
-    assert Decode.three("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736", 0..255) ==
-             {33, "X", 88, "Cooking MC's like a pound of bacon"}
-  end
+  # test "three" do
+  #   assert Decode.three("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736", 0..255) ==
+  #            {33, "X", 88, "Cooking MC's like a pound of bacon"}
+  # end
 
-  test "four/1" do
-    {:ok, contents} = File.read("cryptopals/set1/data/4.txt")
-    list = String.split(contents, "\n")
+  # test "three-one" do
+  #   string = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+  #   int = String.to_integer(string, 16)
+  #   Bitwise.bxor(int, 97)
+  #   # assert Decode.three("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736", 0..255) ==
+  #   #          {33, "X", 88, "Cooking MC's like a pound of bacon"}
+  # end
 
-    assert Decode.four(list) == {29, "5", 53, "Now that the party is jumping\n"}
-  end
+  # test "four/1" do
+  #   {:ok, contents} = File.read("cryptopals/set1/data/4.txt")
+  #   list = String.split(contents, "\n")
 
-  test "five_encode/2" do
-    input = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
-    # """
-    key = "ICE"
+  #   assert Decode.four(list) == {29, "5", 53, "Now that the party is jumping\n"}
+  # end
 
-    assert Decode.five_encode(input, key) == "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
-  end
+  # test "five_encode/2" do
+  #   input = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
+  #   # """
+  #   key = "ICE"
 
-  test "five_decode/2" do
-    input = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
-    output = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
-    # """
-    key = "ICE"
+  #   assert Decode.five_encode(input, key) == "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
+  # end
 
-    assert Decode.five_decode(input, key) == output
-  end
+  # test "five_decode/2" do
+  #   input = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
+  #   output = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
+  #   # """
+  #   key = "ICE"
 
-  test "distance/2" do
-    one = "this is a test"
-    two = "wokka wokka!!!"
-    assert Decode.distance(one, two) == 37
-  end
+  #   assert Decode.five_decode(input, key) == output
+  # end
 
-  test "keysize/1" do
-    {:ok, contents} = File.read("cryptopals/set1/data/6.txt")
-    bin_contents = Base.decode64!(contents, ignore: :whitespace)
-    [{_norm_dist, keysize} | _] = Decode.keysize(bin_contents)
+  # test "distance/2" do
+  #   one = "this is a test"
+  #   two = "wokka wokka!!!"
+  #   assert Decode.distance(one, two) == 37
+  # end
 
-    assert keysize == 29
-  end
+  # test "keysize/1" do
+  #   {:ok, contents} = File.read("cryptopals/set1/data/6.txt")
+  #   bin_contents = Base.decode64!(contents, ignore: :whitespace)
+  #   [{_norm_dist, keysize} | _] = Decode.keysize(bin_contents)
 
-  test "transpose short strings into n" do
-    contents  = "HUIfTQsPAh9PE048"
-    keysize = 4
-    transposed = Decode.transpose(contents, keysize)
-    transposed_list = Enum.map(transposed, &(Tuple.to_list(&1)))
-    assert transposed_list == ['HTAE', 'UQh0', 'Is94', 'fPP8']
+  #   assert keysize == 29
+  # end
 
-    keysize = 8
-    transposed = Decode.transpose(contents, keysize)
-    transposed_list = Enum.map(transposed, &(Tuple.to_list(&1)))
-    assert transposed_list == ['HA', 'Uh', 'I9', 'fP', 'TE', 'Q0', 's4', 'P8']
+  # test "transpose short strings into n" do
+  #   contents  = "HUIfTQsPAh9PE048"
+  #   keysize = 4
+  #   transposed = Decode.transpose(contents, keysize)
+  #   transposed_list = Enum.map(transposed, &(Tuple.to_list(&1)))
+  #   assert transposed_list == ['HTAE', 'UQh0', 'Is94', 'fPP8']
 
-    keysize = 2
-    transposed = Decode.transpose(contents, keysize)
-    transposed_list = Enum.map(transposed, &(Tuple.to_list(&1)))
-    assert transposed_list == ['HITsA9E4', 'UfQPhP08']
-  end
+  #   keysize = 8
+  #   transposed = Decode.transpose(contents, keysize)
+  #   transposed_list = Enum.map(transposed, &(Tuple.to_list(&1)))
+  #   assert transposed_list == ['HA', 'Uh', 'I9', 'fP', 'TE', 'Q0', 's4', 'P8']
 
-  test "transpose a string into 4" do
-    contents  = "HUIfTQsPAh9PE048GmllH0kcDk4TAQsHThsBFkU2AB4BSWQgVB0dQzNTTmVS"
-    keysize = 4
-    transposed = Decode.transpose(contents, keysize)
-    transposed_list = Enum.map(transposed, &(Tuple.to_list(&1)))
-    assert transposed_list == ['HTAEGHDATFASVQT', 'UQh0m0kQhkBWBzm', 'Is94lk4ssU4Q0NV', 'fPP8lcTHB2BgdTS']
-  end
+  #   keysize = 2
+  #   transposed = Decode.transpose(contents, keysize)
+  #   transposed_list = Enum.map(transposed, &(Tuple.to_list(&1)))
+  #   assert transposed_list == ['HITsA9E4', 'UfQPhP08']
+  # end
 
-  test "transpose" do
-    {:ok, contents} = File.read("cryptopals/set1/data/6.txt")
-    keysize = 10
-    transposed = Decode.transpose(contents, keysize)
-    assert length(transposed) == keysize
-    str_len = String.length(contents)
-    first = List.first(transposed) |> Tuple.to_list()
-    assert length(first) == (str_len / keysize) |> trunc()
-  end
+  # test "transpose a string into 4" do
+  #   contents  = "HUIfTQsPAh9PE048GmllH0kcDk4TAQsHThsBFkU2AB4BSWQgVB0dQzNTTmVS"
+  #   keysize = 4
+  #   transposed = Decode.transpose(contents, keysize)
+  #   transposed_list = Enum.map(transposed, &(Tuple.to_list(&1)))
+  #   assert transposed_list == ['HTAEGHDATFASVQT', 'UQh0m0kQhkBWBzm', 'Is94lk4ssU4Q0NV', 'fPP8lcTHB2BgdTS']
+  # end
 
-  test "six" do
-    {:ok, contents} = File.read("cryptopals/set1/data/6.txt")
+  # test "transpose" do
+  #   {:ok, contents} = File.read("cryptopals/set1/data/6.txt")
+  #   keysize = 10
+  #   transposed = Decode.transpose(contents, keysize)
+  #   assert length(transposed) == keysize
+  #   str_len = String.length(contents)
+  #   first = List.first(transposed) |> Tuple.to_list()
+  #   assert length(first) == (str_len / keysize) |> trunc()
+  # end
+
+  # test "six" do
+  #   {:ok, contents} = File.read("cryptopals/set1/data/6.txt")
+  #   bin_contents = Base.decode64!(contents, ignore: :whitespace)
+  #   binary_encoded = bin_contents
+  #   |> Base.encode16(case: :lower)
+
+  #   key_candidates = Decode.six(bin_contents)
+  #   {_, key, decoded} = Enum.map(key_candidates, fn cand ->
+  #     key = Enum.reduce(cand, "", fn {_, char, _, _}, acc -> acc <> char end)
+  #     decoded_str = Decode.five_decode(binary_encoded, key)
+  #     Decode.eval(decoded_str, key)
+  #   end)
+  #   |> Decode.sort()
+  #   |> List.first
+
+  #   assert key == "Terminator X: Bring the noise"
+  #   last_n_chars = String.slice(decoded, -23, 23)
+  #   assert last_n_chars == "Play that funky music \n"
+  # end
+
+  test "seven" do
+    {:ok, contents} = File.read("cryptopals/set1/data/7.txt")
     bin_contents = Base.decode64!(contents, ignore: :whitespace)
     binary_encoded = bin_contents
     |> Base.encode16(case: :lower)
+    # |> IO.inspect(label: "base16")
 
-    key_candidates = Decode.six(bin_contents)
-    {_, key, decoded} = Enum.map(key_candidates, fn cand ->
-      key = Enum.reduce(cand, "", fn {_, char, _, _}, acc -> acc <> char end)
-      decoded_str = Decode.five_decode(binary_encoded, key)
-      Decode.eval(decoded_str, key)
-    end)
-    |> Decode.sort()
-    |> List.first
+    Decode.five_decode(binary_encoded, "YELLOW SUBMARINE")
+    |> IO.inspect(label: "")
+    # key_candidates = Decode.six(bin_contents)
+    # {_, key, decoded} = Enum.map(key_candidates, fn cand ->
+    #   key = Enum.reduce(cand, "", fn {_, char, _, _}, acc -> acc <> char end)
+    #   decoded_str = Decode.five_decode(binary_encoded, key)
+    #   Decode.eval(decoded_str, key)
+    # end)
+    # |> Decode.sort()
+    # |> List.first
 
-    assert key == "Terminator X: Bring the noise"
-    last_n_chars = String.slice(decoded, -23, 23)
-    assert last_n_chars == "Play that funky music \n"
+    # assert key == "Terminator X: Bring the noise"
+    # last_n_chars = String.slice(decoded, -23, 23)
+    # assert last_n_chars == "Play that funky music \n"
   end
 end

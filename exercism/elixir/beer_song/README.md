@@ -319,4 +319,3 @@ are some additional things you could try:
 
 Then please share your thoughts in a comment on the submission. Did this
 experiment make the code better? Worse? Did you learn anything from it?
->>>>>>> e0a473d (add beersong exercise)

@@ -58,6 +58,63 @@ defmodule CryptoPals.Set1.Challenge6 do
   @file_path Path.expand(__DIR__) <> "/6.txt"
   @guessed_lengths 2..40
 
+  def transpose([a | _] = list_of_lists) when is_list(list_of_list) and is_list(a) do
+    list_of_lists
+    |> Enum.zip()
+    |> Enum.map(&Tuple.to_list/1)
+  end
+
+  @spec to_list(tuple() | list()) :: list()
+  defp to_list(tuple) when is_tuple(tuple), do: Tuple.to_list(tuple)
+  defp to_list(list) when is_list(list), do: list
+
+  @doc """
+  Like Enum.zip/2 but concatenates the elements rather than pairing them in
+  tuples. Useful if you want to append one or more elements to a list of lists
+  in one pass.
+
+  NB: the recursion and list concatenation seems like a poor performance choice,
+  but that's literally how Erlang does it, so :shrug:.
+  """
+  @spec zip(tuple(), list(tuple() | list())) :: list(list())
+  def zip(elems, accs) when is_tuple(elems) do
+    zip(to_list(elems), accs)
+  end
+
+  def zip([elem_hd | elems], [acc_hd | accs]) do
+    [to_list(acc_hd) ++ [elem_hd] | zip(elems, accs)]
+  end
+
+  @spec zip(list(), list(list()) | []) :: []
+  def zip(_, []), do: []
+  def zip([], _), do: []
+
+  @doc """
+  Like Enum.unzip/1, but unzips a list of tuples of arbitrary length, quitting
+  when any tuple is exhausted. By the nature of its implementation, it also
+  works for lists of lists.
+      iex> CryptoPals.Set1.Challenge3.unzip([
+      ...>   { 1 ,  2 ,  3 ,  4 },
+      ...>   {"a", "b", "c", "d"},
+      ...> ])
+      [[1, "a"], [2, "b"], [3, "c"], [4, "d"]]
+      iex> CryptoPals.Set1.Challenge3.unzip([
+      ...>   { 1 ,  2 ,  3 ,  4 },
+      ...>   {'A', 'B'          },
+      ...>   {"a", "b", "c", "d"},
+      ...> ])
+      [[1, 'A', "a"], [2, 'B', "b"]]
+  TODO: option to pad short tuples?
+  TODO: option to output list of tuples?
+  """
+  @spec unzip(list(tuple() | list())) :: list(list())
+  def unzip(tuples) do
+    Enum.reduce(tuples, [], fn
+      tuple, [] -> Enum.map(tuple, &[&1])
+      tuple, acc -> zip(tuple, acc)
+    end)
+  end
+
   @doc """
   This is an example fn to serve the example test file. Please delete it and write your own ;)
   """
@@ -70,13 +127,55 @@ defmodule CryptoPals.Set1.Challenge6 do
   end
 
   # @spec hamming_distance(String.t(), String.t())
-  def hamming_distance(a, b) do
-    String.to_charlist()
+  def hamming_distance(a, b) when is_binary(a) do
+    hamming_distance(to_charlist(a), to_charlist(b))
+  end
+
+  # @spec hamming_distance(charlist(), charlist())
+  def hamming_distance(a, b) when is_list(a) do
+    [a, b]
+    |> Enum.zip()
+    |> Enum.reduce(0, fn {a, b}, agg ->
+      a
+      |> Bitwise.bxor(b)
+      |> Integer.to_string(2)
+      |> to_charlist()
+      |> Enum.count(fn
+        ?0 -> false
+        ?1 -> true
+      end)
+      |> Kernel.+(agg)
+    end)
   end
 
   @spec loopy_chunks(String.t()) :: [String.t()]
   defp loopy_chunks(encoded_string) do
     @guessed_lengths
+    |> Enum.map(fn keysize ->
+      # take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes,
+      [first_chunk, second_chunk] =
+        encoded_string
+        |> to_charlist()
+        |> Enum.chunk_every(keysize)
+        |> Enum.take(2)
+
+      # find the edit distance between them.
+      # Normalize this result by dividing by KEYSIZE.
+      score = hamming_distance(first_chunk, second_chunk) / keysize
+
+      {keysize, score}
+    end)
+    # Find keysize smallest normalized edit distance
+    |> Enum.sort_by(fn {_keysize, score} -> score end, :asc)
+    |> Enum.take(10)
+    |> IO.inspect()
+
+    # |> Chunk by KEYSIZE.
+    # |> Transpose
+    # For each chunk
+    # |> Determine single character XOR (with histogram)
+    # end
+    # |> Combine single characters into key?
   end
 end
 
@@ -92,9 +191,31 @@ defmodule CryptoPals.Set1.Challenge6Test do
   use ExUnit.Case
   alias CryptoPals.Set1.Challenge6
 
-  describe "example_fn/1" do
-    test "given a string, produces integer" do
-      assert is_binary(Challenge6.keymaster())
+  describe("transpose/1") do
+    test "given a list of lists transposes" do
+      assert [
+               [1, "a", :x],
+               [2, "b", :y],
+               [3, "c", :z]
+             ] ==
+               Challenge6.transpose([
+                 [1, 2, 3],
+                 ["a", "b", "c"],
+                 [:x, :y, :z]
+               ])
+    end
+  end
+
+  describe "keymaster/0" do
+    test "with a valid text file, returns something" do
+      Challenge6.keymaster()
+    end
+  end
+
+  describe "hamming_distance" do
+    test "computes the edit distance given two strings" do
+      assert 37 == Challenge6.hamming_distance("this is a test", "wokka wokka!!!")
+      assert 1 == Challenge6.hamming_distance("A", "@")
     end
   end
 end

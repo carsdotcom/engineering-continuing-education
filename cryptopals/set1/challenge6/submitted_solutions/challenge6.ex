@@ -1,4 +1,6 @@
 defmodule CryptoPals.Set1.Challenge6 do
+  alias CryptoPals.Set1.Challenge3
+
   @moduledoc """
   Source: 'https://cryptopals.com/sets/1/challenges/6'
 
@@ -58,10 +60,79 @@ defmodule CryptoPals.Set1.Challenge6 do
   @file_path Path.expand(__DIR__) <> "/6.txt"
   @guessed_lengths 2..40
 
-  def transpose([a | _] = list_of_lists) when is_list(list_of_list) and is_list(a) do
+  @doc """
+  Entry fn
+  """
+  @spec keymaster() :: String.t()
+  def keymaster() do
+    block_of_text =
+      @file_path
+      |> File.read!()
+      |> Base.decode64!(ignore: :whitespace)
+
+    first_four_keysizes =
+      block_of_text
+      |> loopy_chunks()
+      |> Enum.take(4)
+      |> Enum.map(&elem(&1, 0))
+      |> IO.inspect(label: IO.ANSI.format([:bright, :cyan_background, "Trial Keysizes", :reset]))
+
+    Enum.map(first_four_keysizes, fn keysize -> try_keys(keysize, block_of_text) end)
+  end
+
+  defp try_keys(keysize, block_of_text) do
+    chunky_text =
+      block_of_text
+      |> to_charlist()
+      |> Enum.chunk_every(keysize)
+      |> pad_chunks()
+
+    chunky_text
+    |> transpose()
+    # |> IO.inspect(label: IO.ANSI.format([:bright, :cyan_background, "YO MTV RAPS", :reset]))
+    # |> Determine single character XOR (with histogram)
+    |> Enum.reduce([], fn chunk, agg ->
+      [chunk |> Challenge3.re_xorcist() |> elem(0) | agg]
+    end)
+    |> Enum.reverse()
+    |> then(fn key ->
+      key
+      |> Enum.zip(chunky_text)
+      |> Enum.reduce([], fn {key, chunk}, agg ->
+        [chunk |> Challenge3.xor_encrypt(key) |> elem(1) | agg]
+      end)
+      |> Enum.reverse()
+    end)
+  end
+
+  def pad_chunks(lists) do
+    list_length = length(List.first(lists))
+    runt_length = length(List.last(lists))
+    new_runt = [List.last(lists) | List.duplicate(0, list_length - runt_length)]
+    List.replace_at(lists, length(lists), new_runt)
+  end
+
+  def transpose([a | _] = list_of_lists) when is_list(a) do
     list_of_lists
+    |> tap(fn lists ->
+      lists
+      |> Enum.map(&length/1)
+      |> IO.inspect(
+        label: IO.ANSI.format([:red, :cyan_background, "LUCE THIS IS YOUR LIST", :reset])
+      )
+    end)
     |> Enum.zip()
     |> Enum.map(&Tuple.to_list/1)
+    |> tap(fn [inner | _] = outer ->
+      IO.puts("""
+      -------------------
+      Transpose sanity ❓ 🧠 ❓ :
+        Input: #{length(list_of_lists)} x #{length(a)}
+        Output: #{length(outer)} x #{length(inner)}
+      -------------------
+      #{if(length(list_of_lists) !== length(inner) || length(outer) !== length(a), do: list_of_lists |> Enum.reverse() |> List.first() |> Kernel.||([]) |> length(), else: "")}
+      """)
+    end)
   end
 
   @spec to_list(tuple() | list()) :: list()
@@ -115,17 +186,6 @@ defmodule CryptoPals.Set1.Challenge6 do
     end)
   end
 
-  @doc """
-  This is an example fn to serve the example test file. Please delete it and write your own ;)
-  """
-  @spec keymaster() :: String.t()
-  def keymaster() do
-    @file_path
-    |> File.read!()
-    |> String.replace("\n", "")
-    |> loopy_chunks()
-  end
-
   # @spec hamming_distance(String.t(), String.t())
   def hamming_distance(a, b) when is_binary(a) do
     hamming_distance(to_charlist(a), to_charlist(b))
@@ -167,15 +227,6 @@ defmodule CryptoPals.Set1.Challenge6 do
     end)
     # Find keysize smallest normalized edit distance
     |> Enum.sort_by(fn {_keysize, score} -> score end, :asc)
-    |> Enum.take(10)
-    |> IO.inspect()
-
-    # |> Chunk by KEYSIZE.
-    # |> Transpose
-    # For each chunk
-    # |> Determine single character XOR (with histogram)
-    # end
-    # |> Combine single characters into key?
   end
 end
 
@@ -217,5 +268,99 @@ defmodule CryptoPals.Set1.Challenge6Test do
       assert 37 == Challenge6.hamming_distance("this is a test", "wokka wokka!!!")
       assert 1 == Challenge6.hamming_distance("A", "@")
     end
+  end
+end
+
+defmodule CryptoPals.Set1.Challenge3 do
+  use Bitwise
+
+  @moduledoc """
+  # luce_jerry_joe solution
+  """
+
+  @average_word_length 4.7
+  # <<32>>
+  @space " "
+
+  @spec re_xorcist(list()) :: {byte(), float(), String.t()}
+  def re_xorcist(bin) when is_list(bin) do
+    # bin = decode_hex_string_to_binary(string)
+
+    list_all_characters()
+    |> Enum.map(&xor_encrypt(bin, &1))
+    |> Enum.map(&score_message/1)
+    |> Enum.sort_by(&elem(&1, 1), :asc)
+    # purely for pretty printing purposes
+    |> Enum.take(26)
+    |> List.first()
+  end
+
+  @spec xor_encrypt(binary(), byte()) :: {byte(), binary()}
+  def xor_encrypt(bin, char) do
+    bin =
+      bin
+      |> Enum.map(&bxor(&1, char))
+      |> encode_charlist_to_binary()
+
+    {char, bin}
+  end
+
+  @spec encode_charlist_to_binary(charlist()) :: binary()
+  defp encode_charlist_to_binary(chars), do: List.to_string(chars)
+
+  @spec decode_binary_to_charlist(binary()) :: charlist()
+  defp decode_binary_to_charlist(bin), do: String.to_charlist(bin)
+
+  @spec decode_hex_string_to_binary(String.t()) :: binary()
+  defp decode_hex_string_to_binary(str), do: Base.decode16!(str, case: :lower)
+
+  @spec list_all_characters() :: [byte()]
+  defp list_all_characters, do: 0..255
+
+  @spec score_message({byte(), binary()}) :: {byte(), float(), binary()}
+  defp score_message({char, message}), do: {char, score_message(message), message}
+
+  @spec score_message(binary()) :: float()
+  defp score_message(message) do
+    weighted_scores = [
+      {2, score_by_printability(message)},
+      {1, score_by_word_length(message)}
+    ]
+
+    # TODO: score by more criteria and aggregate a message's scores
+
+    {weights, _scores} = Enum.unzip(weighted_scores)
+
+    agg_score =
+      weighted_scores
+      |> Enum.map(fn {w, s} -> w * s end)
+      |> Enum.sum()
+      |> Kernel./(Enum.sum(weights))
+
+    agg_score
+  end
+
+  @spec score_by_printability(binary()) :: float()
+  defp score_by_printability(message) do
+    case List.ascii_printable?(String.to_charlist(message)) do
+      true -> 0.0
+      false -> 1.0
+    end
+  end
+
+  @spec score_by_word_length(binary()) :: float()
+  defp score_by_word_length(message) do
+    # HT: @jwharrow for the heuristic!
+
+    word_list = String.split(message, @space)
+
+    total_num_chars = String.length(message)
+    sum_word_length = total_num_chars - length(word_list) + 1
+    avg_word_length = sum_word_length / length(word_list)
+
+    delta = abs(avg_word_length / @average_word_length - 1)
+    normal = total_num_chars / @average_word_length - 1
+
+    delta / normal
   end
 end

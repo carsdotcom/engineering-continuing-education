@@ -86,19 +86,22 @@ defmodule CryptoPals.Set1.Challenge6 do
       |> to_charlist()
       |> Enum.chunk_every(keysize)
 
+    key =
+      chunky_text
+      |> transpose()
+      # |> IO.inspect(label: IO.ANSI.format([:bright, :cyan_background, "YO MTV RAPS", :reset]))
+      # |> Determine single character XOR (with histogram)
+      |> Enum.reduce([], fn chunk, agg ->
+        [chunk |> Challenge3.re_xorcist() |> elem(0) | agg]
+      end)
+      |> Enum.reverse()
+
     chunky_text
-    |> transpose()
-    # |> IO.inspect(label: IO.ANSI.format([:bright, :cyan_background, "YO MTV RAPS", :reset]))
-    # |> Determine single character XOR (with histogram)
-    |> Enum.reduce([], fn chunk, agg ->
-      [chunk |> Challenge3.re_xorcist() |> elem(0) | agg]
-    end)
-    |> Enum.reverse()
-    |> then(fn key ->
+    |> Enum.map(fn chunk ->
       key
-      |> Enum.zip(chunky_text)
+      |> Enum.zip(chunk)
       |> Enum.reduce([], fn {key, chunk}, agg ->
-        [chunk |> Challenge3.xor_encrypt(key) |> elem(1) | agg]
+        [chunk |> Bitwise.bxor(key) | agg]
       end)
       |> Enum.reverse()
     end)

@@ -63,7 +63,7 @@ defmodule CryptoPals.Set1.Challenge6 do
   @doc """
   Entry fn
   """
-  @spec keymaster() :: String.t()
+  @spec keymaster() :: list(charlist())
   def keymaster() do
     block_of_text =
       @file_path
@@ -81,6 +81,7 @@ defmodule CryptoPals.Set1.Challenge6 do
     try_keys(keysize, block_of_text)
   end
 
+  @spec try_keys(integer(), binary()) :: list(charlist())
   defp try_keys(keysize, block_of_text) do
     chunky_text =
       block_of_text
@@ -117,7 +118,8 @@ defmodule CryptoPals.Set1.Challenge6 do
     end)
   end
 
-  def transpose([a | _] = list_of_lists) when is_list(a) do
+  @spec transpose(list(charlist())) :: list(charlist())
+  def transpose([a | _] = list_of_lists) do
     list_of_lists
     |> pad_chunks()
     |> Enum.zip()
@@ -185,14 +187,10 @@ defmodule CryptoPals.Set1.Challenge6 do
     end)
   end
 
-  # @spec hamming_distance(String.t(), String.t())
-  def hamming_distance(a, b) when is_binary(a) do
-    hamming_distance(to_charlist(a), to_charlist(b))
-  end
-
-  # @spec hamming_distance(charlist(), charlist())
-  def hamming_distance(a, b) when is_list(a) do
+  @spec hamming_distance(String.t() | charlist(), String.t() | charlist()) :: float()
+  def hamming_distance(a, b) do
     [a, b]
+    |> Enum.map(&to_charlist/1)
     |> Enum.zip()
     |> Enum.reduce(0, fn {a, b}, agg ->
       a
@@ -301,12 +299,12 @@ defmodule CryptoPals.Set1.Challenge3 do
   # <<32>>
   @space " "
 
-  @spec re_xorcist(list()) :: {byte(), float(), String.t()}
-  def re_xorcist(bin) when is_list(bin) do
+  @spec re_xorcist(charlist()) :: {byte(), float(), String.t()}
+  def re_xorcist(clist) do
     # bin = decode_hex_string_to_binary(string)
 
     list_all_characters()
-    |> Enum.map(&xor_encrypt(bin, &1))
+    |> Enum.map(&xor_encrypt(clist, &1))
     |> Enum.map(&score_message/1)
     |> Enum.sort_by(&elem(&1, 1), :asc)
     # purely for pretty printing purposes
@@ -314,10 +312,10 @@ defmodule CryptoPals.Set1.Challenge3 do
     |> List.first()
   end
 
-  @spec xor_encrypt(binary(), byte()) :: {byte(), binary()}
-  def xor_encrypt(bin, char) do
+  @spec xor_encrypt(charlist(), byte()) :: {byte(), binary()}
+  def xor_encrypt(clist, char) do
     bin =
-      bin
+      clist
       |> Enum.map(&bxor(&1, char))
       |> encode_charlist_to_binary()
 

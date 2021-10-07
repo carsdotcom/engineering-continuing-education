@@ -85,7 +85,6 @@ defmodule CryptoPals.Set1.Challenge6 do
       block_of_text
       |> to_charlist()
       |> Enum.chunk_every(keysize)
-      |> pad_chunks()
 
     chunky_text
     |> transpose()
@@ -116,13 +115,7 @@ defmodule CryptoPals.Set1.Challenge6 do
 
   def transpose([a | _] = list_of_lists) when is_list(a) do
     list_of_lists
-    |> tap(fn lists ->
-      lists
-      |> Enum.map(&length/1)
-      |> IO.inspect(
-        label: IO.ANSI.format([:red, :cyan_background, "LUCE THIS IS YOUR LIST", :reset])
-      )
-    end)
+    |> pad_chunks()
     |> Enum.zip()
     |> Enum.map(&Tuple.to_list/1)
     |> tap(fn [inner | _] = outer ->

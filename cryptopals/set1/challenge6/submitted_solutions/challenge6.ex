@@ -105,11 +105,13 @@ defmodule CryptoPals.Set1.Challenge6 do
     end)
   end
 
+  @spec pad_chunks(list(charlist())) :: list(charlist())
   def pad_chunks(lists) do
-    list_length = length(List.first(lists))
-    runt_length = length(List.last(lists))
-    new_runt = [List.last(lists) | List.duplicate(0, list_length - runt_length)]
-    List.replace_at(lists, length(lists), new_runt)
+    len = Enum.reduce(lists, 0, &max(length(&1), &2))
+
+    Enum.map(lists, fn list ->
+      list ++ List.duplicate(0, len - length(list))
+    end)
   end
 
   def transpose([a | _] = list_of_lists) when is_list(a) do
@@ -267,6 +269,28 @@ defmodule CryptoPals.Set1.Challenge6Test do
     test "computes the edit distance given two strings" do
       assert 37 == Challenge6.hamming_distance("this is a test", "wokka wokka!!!")
       assert 1 == Challenge6.hamming_distance("A", "@")
+    end
+  end
+
+  describe("pad_chunks/1") do
+    test "does nothing if all the lists are the same length" do
+      lists = [
+        [1, 2, 3, 4],
+        ["a", "b", "c", "d"],
+        [:w, :x, :y, :z]
+      ]
+
+      assert lists == Challenge6.pad_chunks(lists)
+    end
+
+    test "pads every list with zeroes to match the length of the longest list" do
+      list1 = [1]
+      list2 = ["a", "b", "c", "d"]
+      list3 = [:y, :z]
+      list4 = [?A, ?B, ?C]
+
+      assert [[1, 0, 0, 0], list2, [:y, :z, 0, 0], [?A, ?B, ?C, 0]] ==
+               Challenge6.pad_chunks([list1, list2, list3, list4])
     end
   end
 end

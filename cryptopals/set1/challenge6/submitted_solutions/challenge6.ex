@@ -133,7 +133,6 @@ defmodule CryptoPals.Set1.Challenge6 do
       #     every block, and a block that is the second byte of every block, and
       #     so on.
       |> transpose()
-      # |> IO.inspect(label: IO.ANSI.format([:bright, :cyan_background, "YO MTV RAPS", :reset]))
       # 8.  For each block, the single-byte XOR key that produces the best
       #     looking histogram is the repeating-key XOR key byte for that block.
       #     Put them together and you have the key.
@@ -170,67 +169,6 @@ defmodule CryptoPals.Set1.Challenge6 do
     |> pad_chunks()
     |> Enum.zip()
     |> Enum.map(&Tuple.to_list/1)
-    |> tap(fn [inner | _] = outer ->
-      IO.puts("""
-      -------------------
-      Transpose sanity ❓ 🧠 ❓ :
-        Input: #{length(list_of_lists)} x #{length(a)}
-        Output: #{length(outer)} x #{length(inner)}
-      -------------------
-      #{if(length(list_of_lists) !== length(inner) || length(outer) !== length(a), do: list_of_lists |> Enum.reverse() |> List.first() |> Kernel.||([]) |> length(), else: "")}
-      """)
-    end)
-  end
-
-  @spec to_list(tuple() | list()) :: list()
-  defp to_list(tuple) when is_tuple(tuple), do: Tuple.to_list(tuple)
-  defp to_list(list) when is_list(list), do: list
-
-  @doc """
-  Like Enum.zip/2 but concatenates the elements rather than pairing them in
-  tuples. Useful if you want to append one or more elements to a list of lists
-  in one pass.
-
-  NB: the recursion and list concatenation seems like a poor performance choice,
-  but that's literally how Erlang does it, so :shrug:.
-  """
-  @spec zip(tuple(), list(tuple() | list())) :: list(list())
-  def zip(elems, accs) when is_tuple(elems) do
-    zip(to_list(elems), accs)
-  end
-
-  def zip([elem_hd | elems], [acc_hd | accs]) do
-    [to_list(acc_hd) ++ [elem_hd] | zip(elems, accs)]
-  end
-
-  @spec zip(list(), list(list()) | []) :: []
-  def zip(_, []), do: []
-  def zip([], _), do: []
-
-  @doc """
-  Like Enum.unzip/1, but unzips a list of tuples of arbitrary length, quitting
-  when any tuple is exhausted. By the nature of its implementation, it also
-  works for lists of lists.
-      iex> CryptoPals.Set1.Challenge3.unzip([
-      ...>   { 1 ,  2 ,  3 ,  4 },
-      ...>   {"a", "b", "c", "d"},
-      ...> ])
-      [[1, "a"], [2, "b"], [3, "c"], [4, "d"]]
-      iex> CryptoPals.Set1.Challenge3.unzip([
-      ...>   { 1 ,  2 ,  3 ,  4 },
-      ...>   {'A', 'B'          },
-      ...>   {"a", "b", "c", "d"},
-      ...> ])
-      [[1, 'A', "a"], [2, 'B', "b"]]
-  TODO: option to pad short tuples?
-  TODO: option to output list of tuples?
-  """
-  @spec unzip(list(tuple() | list())) :: list(list())
-  def unzip(tuples) do
-    Enum.reduce(tuples, [], fn
-      tuple, [] -> Enum.map(tuple, &[&1])
-      tuple, acc -> zip(tuple, acc)
-    end)
   end
 
   @spec hamming_distance(String.t() | charlist(), String.t() | charlist()) :: float()
@@ -357,14 +295,10 @@ defmodule CryptoPals.Set1.Challenge3 do
 
   @spec re_xorcist(charlist()) :: {byte(), float(), String.t()}
   def re_xorcist(clist) do
-    # bin = decode_hex_string_to_binary(string)
-
     list_all_characters()
     |> Enum.map(&xor_encrypt(clist, &1))
     |> Enum.map(&score_message/1)
     |> Enum.sort_by(&elem(&1, 1), :asc)
-    # purely for pretty printing purposes
-    |> Enum.take(26)
     |> List.first()
   end
 
@@ -380,12 +314,6 @@ defmodule CryptoPals.Set1.Challenge3 do
 
   @spec encode_charlist_to_binary(charlist()) :: binary()
   defp encode_charlist_to_binary(chars), do: List.to_string(chars)
-
-  @spec decode_binary_to_charlist(binary()) :: charlist()
-  defp decode_binary_to_charlist(bin), do: String.to_charlist(bin)
-
-  @spec decode_hex_string_to_binary(String.t()) :: binary()
-  defp decode_hex_string_to_binary(str), do: Base.decode16!(str, case: :lower)
 
   @spec list_all_characters() :: [byte()]
   defp list_all_characters, do: 0..255

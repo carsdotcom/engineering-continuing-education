@@ -11,50 +11,78 @@ defmodule CryptoPals.Set1.Challenge6 do
   elixir -r cryptopals/set1/challenge6/elixir_template/challenge6_template.ex
   ```
 
-  When submitting, change the name of this file to reflect the names of those that participated in the solution. (ex: `Challenge6_mary_linda_harriet.ex`)
-  Then create a PR to add your file to the repo under `cryptopals/set1/challenge6/submitted_solutions/`.
+  When submitting, change the name of this file to reflect the names of those
+  that participated in the solution. (ex: `Challenge6_mary_linda_harriet.ex`)
+  Then create a PR to add your file to the repo under
+  `cryptopals/set1/challenge6/submitted_solutions/`.
 
   PROBLEM:
   Break repeating-key XOR
   It is officially on, now.
 
-  This challenge isn't conceptually hard, but it involves actual error-prone coding. The other challenges in this set are there to bring you up to speed. This one is there to qualify you. If you can do this one, you're probably just fine up to Set 6.
+  This challenge isn't conceptually hard, but it involves actual error-prone
+  coding. The other challenges in this set are there to bring you up to speed.
+  This one is there to qualify you. If you can do this one, you're probably just
+  fine up to Set 6.
 
-  There's a file here: (./cryptopals/set1/challenge6/challenge_materials/6.txt). It's been base64'd after being encrypted with repeating-key XOR.
+  There's a file here: (./cryptopals/set1/challenge6/challenge_materials/6.txt).
+  It's been base64'd after being encrypted with repeating-key XOR.
 
   Decrypt it.
 
   Here's how:
 
-    1) Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
+    1.  Let KEYSIZE be the guessed length of the key; try values from 2 to (say)
+        40.
 
-    2) Write a function to compute the edit distance/Hamming distance between two strings. The Hamming distance is just the number of differing bits. The distance between:
+    2.  Write a function to compute the edit distance/Hamming distance between
+        two strings. The Hamming distance is just the number of differing bits.
+        The distance between:
+            `this is a test`
+        and
+            `wokka wokka!!!`
+        is 37. Make sure your code agrees before you proceed.
 
-      `this is a test`
+    3.  For each KEYSIZE,
+        ----  option 1  -------------------  ----  options 2  ------------------
+        take the first KEYSIZE worth of       (see below)
+        bytes, and the second KEYSIZE worth
+        of bytes,
+        -----------------------------------  -----------------------------------
+        and find the edit distance between them. Normalize this result by
+        dividing by KEYSIZE.
 
-      and
+    4.  The KEYSIZE with the smallest normalized edit distance is probably the
+        key.
+        ----  option 1  -------------------  ----  option 2  -------------------
+        You could proceed perhaps with the    Or take 4 KEYSIZE blocks instead
+        smallest 2-3 KEYSIZE values.          of 2 and average the distances.
+        -----------------------------------  -----------------------------------
 
-      `wokka wokka!!!`
+    5.  Now that you probably know the KEYSIZE: break the ciphertext into blocks
+        of KEYSIZE length.
 
-      is 37. Make sure your code agrees before you proceed.
+    6.  Now transpose the blocks: make a block that is the first byte of every
+        block, and a block that is the second byte of every block, and so on.
 
-    3) For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes, and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
+    7.  Solve each block as if it was single-character XOR. You already have
+        code to do this.
 
-    4) The KEYSIZE with the smallest normalized edit distance is probably the key. You could proceed perhaps with the smallest 2-3 KEYSIZE values. Or take 4 KEYSIZE blocks instead of 2 and average the distances.
+    8.  For each block, the single-byte XOR key that produces the best looking
+        histogram is the repeating-key XOR key byte for that block. Put them
+        together and you have the key.
 
-    5) Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
+  This code is going to turn out to be surprisingly useful later on. Breaking
+  repeating-key XOR ("Vigenere") statistically is obviously an academic
+  exercise, a "Crypto 101" thing. But more people "know how" to break it than
+  can actually break it, and a similar technique breaks something much more
+  important.
 
-    6) Now transpose the blocks: make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
-
-    7) Solve each block as if it was single-character XOR. You already have code to do this.
-
-    8) For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key XOR key byte for that block. Put them together and you have the key.
-
-  This code is going to turn out to be surprisingly useful later on. Breaking repeating-key XOR ("Vigenere") statistically is obviously an academic exercise, a "Crypto 101" thing. But more people "know how" to break it than can actually break it, and a similar technique breaks something much more important.
-
-  ## No, that's not a mistake.
-
-    We get more tech support questions for this challenge than any of the other ones. We promise, there aren't any blatant errors in this text. In particular: the "wokka wokka!!!" edit distance really is 37.
+  > No, that's not a mistake.
+  >
+  > We get more tech support questions for this challenge than any of the other
+  > ones. We promise, there aren't any blatant errors in this text. In
+  > particular: the "wokka wokka!!!" edit distance really is 37.
   """
 
   @file_path Path.expand(__DIR__) <> "/6.txt"
@@ -70,19 +98,30 @@ defmodule CryptoPals.Set1.Challenge6 do
       |> File.read!()
       |> Base.decode64!(ignore: :whitespace)
 
+    # 1.  Let KEYSIZE be the guessed length of the key; try values from 2 to
+    #     (say) 40.
     {keysize, _score} =
       @guessed_lengths
+      # 3a. For each KEYSIZE,
       |> Enum.map(fn keysize ->
         {keysize, loopy_chunks(keysize, block_of_text)}
       end)
+      # 4. The KEYSIZE with the smallest normalized edit distance is probably
+      #     the key.
+      #     TODONT: 4a. You could proceed perhaps with the smallest 2-3 KEYSIZE
+      #                 values.
+      #     TODONE: 4b. Or take 4 KEYSIZE blocks instead of 2 and average the
+      #                 distances.
       |> Enum.sort_by(fn {_keysize, score} -> score end, :asc)
       |> List.first()
 
+    # 5a. Now that you probably know the KEYSIZE:
     try_keys(keysize, block_of_text)
   end
 
   @spec try_keys(integer(), binary()) :: list(charlist())
   defp try_keys(keysize, block_of_text) do
+    # 5b. break the ciphertext into blocks of KEYSIZE length.
     chunky_text =
       block_of_text
       |> to_charlist()
@@ -90,10 +129,17 @@ defmodule CryptoPals.Set1.Challenge6 do
 
     key =
       chunky_text
+      # 6.  Now transpose the blocks: make a block that is the first byte of
+      #     every block, and a block that is the second byte of every block, and
+      #     so on.
       |> transpose()
       # |> IO.inspect(label: IO.ANSI.format([:bright, :cyan_background, "YO MTV RAPS", :reset]))
-      # |> Determine single character XOR (with histogram)
+      # 8.  For each block, the single-byte XOR key that produces the best
+      #     looking histogram is the repeating-key XOR key byte for that block.
+      #     Put them together and you have the key.
       |> Enum.reduce([], fn chunk, agg ->
+        # 7.  Solve each block as if it was single-character XOR. You already
+        #     have code to do this.
         [chunk |> Challenge3.re_xorcist() |> elem(0) | agg]
       end)
       |> Enum.reverse()
@@ -207,19 +253,22 @@ defmodule CryptoPals.Set1.Challenge6 do
 
   @spec loopy_chunks(integer(), String.t()) :: float()
   defp loopy_chunks(keysize, encoded_string) do
-    # take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes,
+    # TODONT: 3b. take the first KEYSIZE worth of bytes, and the second KEYSIZE
+    #             worth of bytes,
+    # TODONE: 4b. Or take 4 KEYSIZE blocks instead of 2
     chunks =
       encoded_string
       |> to_charlist()
       |> Enum.chunk_every(keysize)
       |> Enum.take(4)
 
-    # find the edit distance between them.
-    # Normalize this result by dividing by KEYSIZE.
     for {x, i} <- Enum.with_index(chunks),
         y <- Enum.slice(chunks, (i + 1)..(length(chunks) - 1)) do
+      # 3c. and find the edit distance between them. Normalize this result by
+      #     dividing by KEYSIZE.
       hamming_distance(x, y) / keysize
     end
+    # TODONE: 4c. and average the distances.
     |> Enum.sum()
     |> Kernel./(6)
   end
@@ -230,7 +279,7 @@ ExUnit.configure(exclude: :pending, trace: true)
 
 defmodule CryptoPals.Set1.Challenge6Test do
   @moduledoc """
-  Tests for Cryptopals Challenge 1.
+  Tests for Cryptopals Challenge 6.
   For a submission to be considered "complete", all tests should pass.
   """
 
@@ -258,6 +307,13 @@ defmodule CryptoPals.Set1.Challenge6Test do
     end
   end
 
+  # 2.  Write a function to compute the edit distance/Hamming distance between
+  #     two strings. The Hamming distance is just the number of differing bits.
+  #     The distance between:
+  #       `this is a test`
+  #     and
+  #       `wokka wokka!!!`
+  #     is 37. Make sure your code agrees before you proceed.
   describe "hamming_distance" do
     test "computes the edit distance given two strings" do
       assert 37 == Challenge6.hamming_distance("this is a test", "wokka wokka!!!")

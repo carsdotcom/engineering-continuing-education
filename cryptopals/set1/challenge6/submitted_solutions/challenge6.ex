@@ -70,7 +70,13 @@ defmodule CryptoPals.Set1.Challenge6 do
       |> File.read!()
       |> Base.decode64!(ignore: :whitespace)
 
-    {keysize, score} = loopy_chunks(block_of_text)
+    {keysize, _score} =
+      @guessed_lengths
+      |> Enum.map(fn keysize ->
+        {keysize, loopy_chunks(keysize, block_of_text)}
+      end)
+      |> Enum.sort_by(fn {_keysize, score} -> score end, :asc)
+      |> List.first()
 
     try_keys(keysize, block_of_text)
   end
@@ -201,32 +207,23 @@ defmodule CryptoPals.Set1.Challenge6 do
     end)
   end
 
-  @spec loopy_chunks(String.t()) :: [String.t()]
-  defp loopy_chunks(encoded_string) do
-    @guessed_lengths
-    |> Enum.map(fn keysize ->
-      # take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes,
-      chunks =
-        encoded_string
-        |> to_charlist()
-        |> Enum.chunk_every(keysize)
-        |> Enum.take(4)
+  @spec loopy_chunks(integer(), String.t()) :: float()
+  defp loopy_chunks(keysize, encoded_string) do
+    # take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes,
+    chunks =
+      encoded_string
+      |> to_charlist()
+      |> Enum.chunk_every(keysize)
+      |> Enum.take(4)
 
-      # find the edit distance between them.
-      # Normalize this result by dividing by KEYSIZE.
-      score =
-        for {x, i} <- Enum.with_index(chunks),
-            y <- Enum.slice(chunks, (i + 1)..(length(chunks) - 1)) do
-          hamming_distance(x, y) / keysize
-        end
-        |> Enum.sum()
-        |> Kernel./(6)
-
-      {keysize, score}
-    end)
-    # Find keysize smallest normalized edit distance
-    |> Enum.sort_by(fn {_keysize, score} -> score end, :asc)
-    |> List.first()
+    # find the edit distance between them.
+    # Normalize this result by dividing by KEYSIZE.
+    for {x, i} <- Enum.with_index(chunks),
+        y <- Enum.slice(chunks, (i + 1)..(length(chunks) - 1)) do
+      hamming_distance(x, y) / keysize
+    end
+    |> Enum.sum()
+    |> Kernel./(6)
   end
 end
 

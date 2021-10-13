@@ -53,6 +53,46 @@ defmodule CryptoPals.Set1.Challenge6 do
   ## No, that's not a mistake.
 
     We get more tech support questions for this challenge than any of the other ones. We promise, there aren't any blatant errors in this text. In particular: the "wokka wokka!!!" edit distance really is 37.
+
+  ## Block-cipher and transpose explanation:
+
+  string:   "hello friend"
+  key:      "ice"
+  charlist = ["h", "e", "l", "l", "o", " ", "f", "r", "i", "e", "n", "d"]
+  key      = ["i", "c", "e", "i", "c", "e", "i", "c", "e", "i", "c", "e"]
+
+  Enum.zip(charlist, key)
+    [
+      {"h", "i"},
+      {"e", "c"},
+      {"l", "e"},
+      {"l", "i"},
+      {"o", "c"},
+      {" ", "e"},
+      {"f", "i"},
+      {"r", "c"},
+      {"i", "e"},
+      {"e", "i"},
+      {"n", "c"},
+      {"d", "e"}
+    ]
+
+  list3 = Enum.chunk(charlist, 3)
+  [["h", "e", "l"], ["l", "o", " "], ["f", "r", "i"], ["e", "n", "d"]]
+  key3 = Enum.chunk(key, 3)
+  [["i", "c", "e"], ["i", "c", "e"], ["i", "c", "e"], ["i", "c", "e"]]
+
+  # transpose!
+  Enum.zip(list3)
+  [["h", "l", "f", "e"], ["e", "o", "r", "n"], ["l", " ", "i", "d"]]
+  Enum.zip(key3)
+  [["i", "i", "i", "i"], ["c", "c", "c", "c"], ["e", "e", "e", "e"]]
+
+  # convert chars to integers
+  [104, 108, 102, 101] #["h", "l", "f", "e"]
+  [105, 105, 105, 105] #["i", "i", "i", "i"]
+  XOR!
+  [1, 5, 15, 12]
   """
 
   @doc """
@@ -69,7 +109,7 @@ ExUnit.configure(exclude: :pending, trace: true)
 
 defmodule CryptoPals.Set1.Challenge6Test do
   @moduledoc """
-  Tests for Cryptopals Challenge 1.
+  Tests for Cryptopals Challenge 6.
   For a submission to be considered "complete", all tests should pass.
   """
 

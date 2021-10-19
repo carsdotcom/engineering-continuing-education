@@ -321,28 +321,47 @@ defmodule DecodeTest do
   #   |> Base.encode16(case: :lower)
 
   #   key_candidates = Decode.six(bin_contents)
-  #   {_, key, decoded} = Enum.map(key_candidates, fn cand ->
-  #     key = Enum.reduce(cand, "", fn {_, char, _, _}, acc -> acc <> char end)
-  #     decoded_str = Decode.five_decode(binary_encoded, key)
-  #     Decode.eval(decoded_str, key)
-  #   end)
-  #   |> Decode.sort()
-  #   |> List.first
+    # {_, key, decoded} = Enum.map(key_candidates, fn cand ->
+    #   key = Enum.reduce(cand, "", fn {_, char, _, _}, acc -> acc <> char end)
+    #   |> IO.inspect(label: "")
+    #   decoded_str = Decode.five_decode(binary_encoded, key)
+    #   |> IO.inspect(label: "")
+    #   Decode.eval(decoded_str, key)
+    #   |> IO.inspect(label: "")
+    # end)
+    # |> Decode.sort()
+    # |> List.first
 
   #   assert key == "Terminator X: Bring the noise"
   #   last_n_chars = String.slice(decoded, -23, 23)
   #   assert last_n_chars == "Play that funky music \n"
   # end
 
+  # MISC NOTES FOR 7
+  # args = ["aes-128-ecb", "-in", path, "-K", Base.encode16(key), "-d", "-nopad"]
+
+  # 59454C4C4F57205355424D4152494E45
+
+  # openssl aes-128-ecb -in cryptopals/set1/data/7.txt -K key "YELLOW SUBMARINE" -d -nopad
+
+  # :crypto.crypto_one_time(:aes_128_ecb, "YELLOW SUBMARINE", bin_contents, false)
+
   test "seven" do
     {:ok, contents} = File.read("cryptopals/set1/data/7.txt")
+    # contents |> IO.inspect(label: "")
     bin_contents = Base.decode64!(contents, ignore: :whitespace)
+    |> IO.inspect(label: "")
     binary_encoded = bin_contents
     |> Base.encode16(case: :lower)
-    # |> IO.inspect(label: "base16")
+    |> IO.inspect(label: "base16")
 
-    Decode.five_decode(binary_encoded, "YELLOW SUBMARINE")
-    |> IO.inspect(label: "")
+
+    key = "YELLOW SUBMARINE"
+    # decoded_str = Decode.five_decode(binary_encoded, key)
+    # |> IO.inspect(label: "decoded")
+    # Decode.eval(decoded_str, key)
+    # |> IO.inspect(label: "eval")
+    # Decode.five_decode(binary_encoded, "YELLOW SUBMARINE")
     # key_candidates = Decode.six(bin_contents)
     # {_, key, decoded} = Enum.map(key_candidates, fn cand ->
     #   key = Enum.reduce(cand, "", fn {_, char, _, _}, acc -> acc <> char end)

@@ -1,0 +1,7 @@
+The exercises could be found in the following github repository (fasm + Windows):
+- https://github.com/xorpd/asm_prog_ex
+If you want to work with yasm on linux, use these exercises, ported by Tyler Bohan to yasm:
+- https://github.com/xorpd/asm_prog_ex_yasm
+All the code shown in the lectures could be found here:
+- https://github.com/xorpd/asm_prog_material
+Don't skip the exercises! They are key to really understanding what you learn here.
